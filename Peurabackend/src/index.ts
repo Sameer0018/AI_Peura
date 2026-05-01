@@ -30,10 +30,12 @@ app.get('/', (req, res) => {
 import ideaRoutes from './routes/idea';
 import scrapeRoutes from './routes/scrape';
 import notifyRoutes from './routes/notify';
+import aiRoutes from './routes/ai';
 
 app.use('/api/idea', ideaRoutes);
 app.use('/api/scrape', scrapeRoutes);
 app.use('/api/notify', notifyRoutes);
+app.use('/api/ai', aiRoutes);
 
 
 // Basic health check

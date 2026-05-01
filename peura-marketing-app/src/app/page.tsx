@@ -73,7 +73,7 @@ export default function App() {
     setSelectedIdea((prev: any) => ({ ...prev, generationStatus: 'pending' }));
     
     try {
-      const res = await fetch('/api/ai/generate', {
+      const res = await fetch(`${API_URL}/api/ai/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idea })
