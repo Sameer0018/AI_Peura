@@ -17,6 +17,15 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('calendar');
   const [ideas, setIdeas] = useState<any[]>([]);
   const [selectedIdea, setSelectedIdea] = useState<any | null>(null);
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
+
 
   useEffect(() => {
     fetchIdeas();
@@ -35,16 +44,55 @@ export default function App() {
   };
 
   const handleGenerate = async (id: string) => {
-    // Optimistic update for UI
+    const idea = ideas.find(i => i._id === id);
+    if (!idea) return;
+
     setIdeas(ideas.map(i => i._id === id ? { ...i, generationStatus: 'pending' } : i));
     setSelectedIdea((prev: any) => ({ ...prev, generationStatus: 'pending' }));
     
-    // Simulate generation time
-    setTimeout(() => {
-        setIdeas(ideas.map(i => i._id === id ? { ...i, generationStatus: 'completed' } : i));
-        setSelectedIdea((prev: any) => ({ ...prev, generationStatus: 'completed' }));
-    }, 4000);
+    try {
+      const res = await fetch('/api/ai/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idea })
+      });
+      
+      const { script, error } = await res.json();
+      if (error) throw new Error(error);
+
+      // Update the idea in the database with the new script
+      const updated = await handleUpdateIdea(id, { 
+        script, 
+        generationStatus: 'completed' 
+      });
+
+      setNotification({ message: "Peura Script Generated Successfully!", type: 'success' });
+
+      // Send email notification
+      try {
+        const notifyRes = await fetch(`${API_URL}/api/notify/success`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id })
+        });
+        const notifyData = await notifyRes.json();
+        if (notifyData.warning === 'EMAIL_FAILED') {
+          setNotification({ message: "Script saved, but email failed. Check your Brevo key!", type: 'error' });
+        }
+      } catch (emailErr) {
+        console.error("Email notification failed:", emailErr);
+      }
+
+
+    } catch (e: any) {
+      console.error("AI Generation Failed:", e);
+      setIdeas(ideas.map(i => i._id === id ? { ...i, generationStatus: 'failed' } : i));
+      setSelectedIdea((prev: any) => ({ ...prev, generationStatus: 'failed' }));
+      setNotification({ message: `Generation Failed: ${e.message}`, type: 'error' });
+    }
   };
+
+
 
   const handleUpdateIdea = async (id: string, updates: any) => {
     try {
@@ -56,10 +104,13 @@ export default function App() {
       const updated = await res.json();
       setIdeas(ideas.map(i => i._id === id ? updated : i));
       setSelectedIdea(updated);
+      return updated;
     } catch (e) {
       console.error(e);
+      return null;
     }
   };
+
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -82,7 +133,14 @@ export default function App() {
           >
             <LayoutDashboard size={20} /> Dashboard
           </button>
+          <button 
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'created' ? 'bg-amber-50 text-accent' : 'text-slate-500 hover:bg-slate-50 hover:text-accent'}`}
+            onClick={() => setActiveTab('created')}
+          >
+            <CheckCircle2 size={20} /> CreatedPeura
+          </button>
         </nav>
+
 
         <div className="mt-auto">
             <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition-all font-medium">
@@ -106,7 +164,18 @@ export default function App() {
         <div className="view-container">
             {activeTab === 'calendar' && <CalendarView ideas={ideas} onSelectIdea={setSelectedIdea} />}
             {activeTab === 'dashboard' && <DashboardView ideasCount={ideas.length} />}
+            {activeTab === 'created' && <CreatedPeuraView ideas={ideas} onSelectIdea={setSelectedIdea} />}
         </div>
+
+        {/* Global Notification */}
+        {notification && (
+            <div className={`fixed bottom-8 right-8 px-6 py-4 rounded-2xl shadow-2xl z-[100] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 ${notification.type === 'success' ? 'bg-slate-900 text-white' : 'bg-rose-600 text-white'}`}>
+                {notification.type === 'success' ? <CheckCircle2 size={20} className="text-green-400" /> : <Sparkles size={20} className="text-rose-200" />}
+                <p className="font-bold text-sm">{notification.message}</p>
+                <button onClick={() => setNotification(null)} className="ml-4 opacity-50 hover:opacity-100">×</button>
+            </div>
+        )}
+
 
         {/* Content Planning Modal */}
         {selectedIdea && (
@@ -179,42 +248,69 @@ export default function App() {
                             </div>
                         </div>
 
-                        {/* Right Column: Video Generation */}
+                        {/* Right Column: Media Preview */}
                         <div className="h-full">
-                            <div className="h-full min-h-[500px] bg-slate-900 rounded-[32px] flex items-center justify-center text-white text-center p-10 shadow-xl relative overflow-hidden">
-                                {/* Decorative elements */}
-                                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-accent/20 to-transparent opacity-50"></div>
+                            <div className="h-full min-h-[500px] bg-slate-900 rounded-[32px] flex items-center justify-center text-white text-center p-0 shadow-xl relative overflow-hidden group">
+                                {/* Media Background Overlay */}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10"></div>
                                 
                                 {selectedIdea.generationStatus === 'completed' ? (
-                                    <div className="z-10 flex flex-col items-center">
-                                        <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-2xl cursor-pointer hover:bg-white/30 transition-all">
-                                          <Play size={32} color="#fff" className="ml-2" />
+                                    <>
+                                        {/* Dynamic Media Preview */}
+                                        <div className="absolute inset-0 z-0">
+                                          <img 
+                                            src={`https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80&w=800&h=${selectedIdea.contentType === 'Video' || selectedIdea.contentType === 'Story' ? '1200' : '800'}`} 
+                                            alt="Peura Preview" 
+                                            className="w-full h-full object-cover"
+                                          />
                                         </div>
-                                        <h3 className="text-2xl font-bold mb-2">Video Ready</h3>
-                                        <p className="text-slate-300 text-sm mb-8">AI production complete</p>
-                                        <button className="bg-white text-slate-900 px-8 py-3.5 rounded-xl font-bold shadow-lg hover:bg-slate-100 transition-colors">
-                                          Download MP4
-                                        </button>
-                                    </div>
+
+                                        <div className="z-20 flex flex-col items-center p-10">
+                                            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-2xl cursor-pointer hover:scale-110 transition-all border border-white/30">
+                                              {selectedIdea.contentType === 'Video' ? <Play size={32} fill="white" className="ml-1" /> : <Sparkles size={32} className="text-white" />}
+                                            </div>
+                                            <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">
+                                              {selectedIdea.contentType === 'Video' ? 'Reel Ready' : 
+                                               selectedIdea.contentType === 'Story' ? 'Story Design' : 'Asset Ready'}
+                                            </h3>
+                                            <p className="text-slate-300 text-sm mb-8 font-medium italic">
+                                              AI {selectedIdea.contentType === 'Video' ? 'Video' : 'Visual'} Production Complete
+                                            </p>
+                                            <div className="flex gap-4">
+                                              <a 
+                                                href={`https://images.unsplash.com/photo-1572635196237-14b3f281503f`}
+                                                download={`Peura_${selectedIdea.contentType}_${selectedIdea._id}.jpg`}
+                                                target="_blank"
+                                                className="bg-white text-slate-900 px-8 py-3.5 rounded-xl font-bold shadow-lg hover:bg-slate-100 transition-all hover:scale-105"
+                                              >
+                                                Download {selectedIdea.contentType === 'Video' ? 'MP4' : 'JPG'}
+                                              </a>
+                                            </div>
+                                        </div>
+                                    </>
                                 ) : (
-                                    <div className="z-10 flex flex-col items-center max-w-xs mx-auto">
-                                        <RefreshCw size={40} color="rgba(255,255,255,0.5)" className={`mb-6 ${selectedIdea.generationStatus === 'pending' ? 'animate-spin' : ''}`} />
-                                        <p className="text-slate-300 font-medium mb-8 leading-relaxed">
-                                          {selectedIdea.generationStatus === 'pending' 
-                                            ? 'Google Veo is currently generating your cinematic video sequence...' 
-                                            : 'Ready to turn this script into a high-converting video.'}
-                                        </p>
-                                        <button 
-                                            className="bg-accent text-white px-8 py-4 rounded-2xl font-bold w-full shadow-lg shadow-accent/20 hover:-translate-y-1 hover:shadow-accent/40 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                                            disabled={selectedIdea.generationStatus === 'pending'}
-                                            onClick={() => handleGenerate(selectedIdea._id)}
-                                        >
-                                            {selectedIdea.generationStatus === 'pending' ? 'Processing...' : 'Create with Google Veo'}
-                                        </button>
+                                    <div className="z-20 flex flex-col items-center max-w-xs mx-auto p-10">
+                                        <div className="absolute inset-0 bg-slate-900 z-0"></div>
+                                        <div className="z-10 flex flex-col items-center">
+                                          <RefreshCw size={40} className={`mb-6 text-accent ${selectedIdea.generationStatus === 'pending' ? 'animate-spin' : ''}`} />
+                                          <p className="text-slate-300 font-bold mb-8 leading-relaxed uppercase tracking-widest text-[10px]">
+                                            {selectedIdea.generationStatus === 'pending' 
+                                              ? 'Peura AI is processing your cinematic sequence...' 
+                                              : 'Ready to turn this script into a viral asset.'}
+                                          </p>
+                                          <button 
+                                              className="bg-accent text-white px-8 py-4 rounded-2xl font-black w-full shadow-lg shadow-accent/40 hover:-translate-y-1 hover:shadow-accent/60 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none uppercase tracking-wider text-xs"
+                                              disabled={selectedIdea.generationStatus === 'pending'}
+                                              onClick={() => handleGenerate(selectedIdea._id)}
+                                          >
+                                              {selectedIdea.generationStatus === 'pending' ? 'Generating...' : 'Create with Peura AI'}
+                                          </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
                         </div>
+
                     </div>
                 </div>
             </div>
@@ -305,6 +401,69 @@ function DashboardView({ ideasCount }: { ideasCount: number }) {
         <h4 className="text-slate-500 font-bold uppercase text-xs tracking-wider mb-3">Production Goal</h4>
         <div className="text-5xl font-black text-slate-800">100%</div>
       </div>
+    </div>
+  );
+}
+function CreatedPeuraView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (idea: any) => void }) {
+  const createdIdeas = ideas.filter(i => i.generationStatus === 'completed');
+  
+  // Group by date
+  const grouped = createdIdeas.reduce((acc: any, idea) => {
+    const date = idea.scheduledDate ? new Date(idea.scheduledDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Unscheduled';
+    if (!acc[date]) acc[date] = [];
+    acc[date].push(idea);
+    return acc;
+  }, {});
+
+  if (createdIdeas.length === 0) {
+    return (
+      <div className="text-center py-20 bg-white rounded-[32px] border border-slate-100 shadow-sm">
+        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 size={40} className="text-slate-200" />
+        </div>
+        <h3 className="text-xl font-bold text-slate-800">No content created yet</h3>
+        <p className="text-slate-500 mt-2">Generate your first Peura script from the Smart Calendar.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-10">
+      {Object.entries(grouped).map(([date, items]: [string, any]) => (
+        <div key={date}>
+          <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-accent mb-6 flex items-center gap-4">
+            {date}
+            <div className="h-px bg-slate-100 flex-1"></div>
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((idea: any, idx: number) => (
+              <div 
+                key={idx} 
+                className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group"
+                onClick={() => onSelectIdea(idea)}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    idea.contentType === 'Video' ? 'bg-rose-50 text-rose-600' :
+                    idea.contentType === 'Carousel' ? 'bg-violet-50 text-violet-600' :
+                    idea.contentType === 'Post' ? 'bg-sky-50 text-sky-600' : 'bg-amber-50 text-amber-600'
+                  }`}>
+                    {idea.contentType}
+                  </div>
+                  <div className="text-slate-300 group-hover:text-accent transition-colors">
+                    <Play size={18} />
+                  </div>
+                </div>
+                <h4 className="font-bold text-slate-800 line-clamp-2 mb-3 leading-tight">{idea.title}</h4>
+                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">{idea.script?.hook}</p>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-green-600 bg-green-50 w-fit px-3 py-1.5 rounded-lg">
+                  <CheckCircle2 size={12} /> AI Script Ready
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
