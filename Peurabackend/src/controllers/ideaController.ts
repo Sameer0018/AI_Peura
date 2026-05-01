@@ -26,8 +26,11 @@ export const updateIdea = async (req: Request, res: Response) => {
           scheduledDate: body.scheduledDate,
           contentType: body.contentType,
           title: body.title,
-          isDraft: body.isDraft
+          isDraft: body.isDraft,
+          script: body.script,
+          generationStatus: body.generationStatus
         } 
+
       },
       { new: true }
     );

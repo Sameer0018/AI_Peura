@@ -25,7 +25,8 @@ export const scrapeNewIdeas = async (req: Request, res: Response) => {
         const exists = await Idea.findOne({ link: post.link });
         if (!exists) {
           const type = contentTypes[Math.floor(Math.random() * contentTypes.length)];
-          const script = generateFinalizedScript(post.title + " " + post.description, type);
+          const script = await generateFinalizedScript(post.title + " " + post.description, type);
+
           
           await Idea.create({
             ...post,

@@ -29,9 +29,12 @@ app.get('/', (req, res) => {
 // Routes
 import ideaRoutes from './routes/idea';
 import scrapeRoutes from './routes/scrape';
+import notifyRoutes from './routes/notify';
 
 app.use('/api/idea', ideaRoutes);
 app.use('/api/scrape', scrapeRoutes);
+app.use('/api/notify', notifyRoutes);
+
 
 // Basic health check
 app.get('/health', (req, res) => {

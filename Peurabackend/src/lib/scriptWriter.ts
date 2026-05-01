@@ -1,4 +1,9 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
 export const TEMPLATES = [
+// ... (keep templates for fallback)
     {
         name: "The Trend Hijack",
         script: (theme: string) => ({
@@ -8,48 +13,48 @@ export const TEMPLATES = [
             caption: `The red carpet is calling, but your wallet doesn't have to scream. 🕶️ Inspired by the latest in ${theme.substring(0, 30)}.`,
             hashtags: "#PeuraStyle #EyewearTrends #LuxuryLook #BudgetFriendly #StyleInspo"
         })
-    },
-    {
-        name: "Problem / Solution",
-        script: (theme: string) => ({
-            hook: "Stop scrolling if your eyes feel like this... 😵‍💫",
-            mid: `We saw the latest buzz about ${theme.substring(0, 40)}. While others talk, Peura Opticals delivers. Our lenses are designed for your digital life.`,
-            cta: "Protect your eyes. Link in bio.",
-            caption: "Your eyes deserve a break. 💻 Blue light protection that actually looks good. #PeuraCare",
-            hashtags: "#EyeHealth #BlueLightGlasses #PeuraOpticals #DigitalNomad #WorkFromHome"
-        })
-    },
-    {
-        name: "The Luxury Vibe",
-        script: (theme: string) => ({
-            hook: "Pov: You found the eyewear cheat code. ✨",
-            mid: `Forget the thousands. We took the inspiration from ${theme.substring(0, 30)} and made it accessible. Real titanium, premium finish, Peura prices.`,
-            cta: "Upgrade your gaze. Link in bio.",
-            caption: "Luxury isn't a price tag, it's a feeling. 🏛️ Get the premium look today. #PeuraLuxe",
-            hashtags: "#PremiumEyewear #QuietLuxury #PeuraOpticals #FashionDaily #OOTD"
-        })
     }
 ];
 
-export function generateFinalizedScript(theme: string, type: 'Video' | 'Carousel' | 'Post' | 'Story' = 'Video') {
-    const template = TEMPLATES[Math.floor(Math.random() * TEMPLATES.length)];
-    const baseScript = template.script(theme);
-    
-    // Tailor for content type
-    let finalScript = { ...baseScript };
-    
-    if (type === 'Carousel') {
-        finalScript.hook = `Slide 1: ${baseScript.hook}`;
-        finalScript.mid = `Slide 2-4: ${baseScript.mid}`;
-        finalScript.cta = `Slide 5: ${baseScript.cta}`;
-    } else if (type === 'Story') {
-        finalScript.hook = `Quick Tip: ${baseScript.hook}`;
-        finalScript.mid = `Details: ${baseScript.mid.substring(0, 100)}...`;
-        finalScript.cta = `Tap link!`;
+export async function generateFinalizedScript(theme: string, type: 'Video' | 'Carousel' | 'Post' | 'Story' = 'Video') {
+    try {
+        if (!process.env.GEMINI_API_KEY) throw new Error("No API Key");
+
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        const prompt = `
+            You are an expert D2C marketing content creator for Peura Opticals. 
+            Generate a high-converting marketing script for the following theme:
+            Theme: ${theme}
+            Content Format: ${type}
+            
+            The script must have these parts in JSON format:
+            - hook: A powerful opening line.
+            - mid: Compelling story/value prop.
+            - cta: Clear call to action.
+            - caption: Instagram caption.
+            - hashtags: 5 relevant hashtags.
+
+            Return ONLY the JSON.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
+        const script = JSON.parse(cleanJson);
+
+        return {
+            templateName: "Gemini AI",
+            ...script
+        };
+    } catch (error) {
+        console.error("AI Script Generation Failed, using fallback:", error);
+        const template = TEMPLATES[0];
+        const baseScript = template.script(theme);
+        return {
+            templateName: "Fallback: " + template.name,
+            ...baseScript
+        };
     }
-    
-    return {
-        templateName: template.name,
-        ...finalScript
-    };
 }
+
