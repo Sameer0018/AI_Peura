@@ -15,22 +15,24 @@ export default function PeuraDashboard() {
     fetchIdeas();
   }, []);
 
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
   const fetchIdeas = async () => {
-    const res = await fetch('/api/scrape');
+    const res = await fetch(`${API_URL}/api/scrape`);
     const data = await res.json();
     if (!data.error) setIdeas(data);
   };
 
   const handleScrape = async () => {
     setIsScraping(true);
-    await fetch('/api/scrape', { method: 'POST' });
+    await fetch(`${API_URL}/api/scrape`, { method: 'POST' });
     await fetchIdeas();
     setIsScraping(false);
   };
 
   const handleUpdateIdea = async (id: string, updates: any) => {
     setIsUpdating(true);
-    const res = await fetch(`/api/idea/${id}/update`, {
+    const res = await fetch(`${API_URL}/api/idea/${id}/update`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates)
