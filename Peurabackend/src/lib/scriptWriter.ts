@@ -60,6 +60,13 @@ export async function generateFinalizedScript(theme: string, type: 'Video' | 'Ca
         const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
         const script = JSON.parse(cleanJson);
 
+        if (typeof script.storyline !== 'string') {
+            script.storyline = JSON.stringify(script.storyline, null, 2);
+        }
+        if (typeof script.visualDirection !== 'string') {
+            script.visualDirection = JSON.stringify(script.visualDirection, null, 2);
+        }
+
         return {
             templateName: "Strategic AI",
             ...script

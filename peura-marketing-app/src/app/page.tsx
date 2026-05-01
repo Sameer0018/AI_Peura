@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, LayoutDashboard, Play, Settings, RefreshCw, Sparkles, CheckCircle2, Menu, X } from 'lucide-react';
+import { Calendar, LayoutDashboard, Play, Settings, RefreshCw, Sparkles, CheckCircle2, Menu, X, MessageCircle } from 'lucide-react';
 
 const D2C_STRATEGY: Record<number, { format: string, color: string, tip: string }> = {
   0: { format: 'Story', color: 'bg-amber-100 text-amber-800 border-amber-200', tip: 'Sunday: Casual & Behind the scenes' },
@@ -136,6 +136,7 @@ export default function App() {
         body: JSON.stringify(newIdea)
       });
       const created = await res.json();
+      if (created.error) throw new Error(created.error);
       setIdeas(prev => [created, ...prev]);
       return created;
     } catch (e) {
@@ -403,21 +404,44 @@ export default function App() {
                                             <p className="text-slate-300 text-sm mb-8 font-medium italic">
                                               AI {selectedIdea.contentType === 'Video' ? 'Video' : 'Visual'} Production Complete
                                             </p>
-                                            <div className="flex gap-4">
-                                              <a 
-                                                href={`https://images.unsplash.com/photo-1572635196237-14b3f281503f`}
-                                                download={`Peura_${selectedIdea.contentType}_${selectedIdea._id}.jpg`}
-                                                target="_blank"
-                                                className="bg-white text-slate-900 px-8 py-3.5 rounded-xl font-bold shadow-lg hover:bg-slate-100 transition-all hover:scale-105"
-                                              >
-                                                Download {selectedIdea.contentType === 'Video' ? 'MP4' : 'JPG'}
-                                              </a>
-                                              <button 
-                                                onClick={() => handleGenerate(selectedIdea._id)}
-                                                className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-white/30 transition-all flex items-center gap-2"
-                                              >
-                                                <RefreshCw size={18} /> Regenerate
-                                              </button>
+                                            <div className="flex flex-col w-full gap-3 mt-6">
+                                              <div className="flex gap-4 justify-center">
+                                                <a 
+                                                  href={`https://images.unsplash.com/photo-1572635196237-14b3f281503f`}
+                                                  download={`Peura_${selectedIdea.contentType}_${selectedIdea._id}.jpg`}
+                                                  target="_blank"
+                                                  className="bg-white text-slate-900 px-8 py-3.5 rounded-xl font-bold shadow-lg hover:bg-slate-100 transition-all hover:scale-105"
+                                                >
+                                                  Download {selectedIdea.contentType === 'Video' ? 'MP4' : 'JPG'}
+                                                </a>
+                                                <button 
+                                                  onClick={() => handleGenerate(selectedIdea._id)}
+                                                  className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-white/30 transition-all flex items-center gap-2"
+                                                >
+                                                  <RefreshCw size={18} /> Regenerate
+                                                </button>
+                                              </div>
+                                              <div className="flex gap-4 justify-center mt-2">
+                                                <a 
+                                                  href={`https://wa.me/917987732171?text=${encodeURIComponent(`*${selectedIdea.title}*\n\n*Hook:* ${selectedIdea.script?.hook || ''}\n\n*Storyline:* ${selectedIdea.script?.storyline || ''}\n\n*Visuals:* ${selectedIdea.script?.visualDirection || ''}\n\n*CTA:* ${selectedIdea.script?.cta || ''}`)}`}
+                                                  target="_blank"
+                                                  className="bg-green-500 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg hover:bg-green-600 transition-all flex items-center justify-center gap-2 flex-1"
+                                                >
+                                                  <MessageCircle size={18} /> Send to WhatsApp
+                                                </a>
+                                                <a 
+                                                  href="https://www.instagram.com/lenskart/"
+                                                  target="_blank"
+                                                  className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3.5 rounded-xl font-bold shadow-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 flex-1"
+                                                >
+                                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+                                                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                                                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+                                                  </svg>
+                                                  Open Instagram
+                                                </a>
+                                              </div>
                                             </div>
                                         </div>
                                     </>
