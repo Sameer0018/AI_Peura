@@ -35,8 +35,11 @@ export const scrapeNewIdeas = async (req: Request, res: Response) => {
             isDraft: false,
             script: {
               hook: script.hook,
-              mid: script.mid,
+              storyline: script.storyline,
+              visualDirection: script.visualDirection,
+              productFraming: script.productFraming,
               cta: script.cta,
+              variations: script.variations,
               caption: script.caption,
               hashtags: script.hashtags,
             }

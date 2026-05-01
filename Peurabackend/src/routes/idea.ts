@@ -1,5 +1,5 @@
 import express from 'express';
-import { getIdeaById, updateIdea } from '../controllers/ideaController';
+import { getIdeaById, updateIdea, createIdea } from '../controllers/ideaController';
 
 const router = express.Router();
 
@@ -65,5 +65,25 @@ router.get('/:id', getIdeaById);
  *         description: Server error
  */
 router.put('/:id/update', updateIdea);
+
+/**
+ * @swagger
+ * /api/idea/create:
+ *   post:
+ *     summary: Create a new idea record
+ *     description: Creates a new entry in the database, used for saving newly generated content without overwriting the original idea.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       201:
+ *         description: Successfully created idea
+ *       500:
+ *         description: Server error
+ */
+router.post('/create', createIdea);
 
 export default router;

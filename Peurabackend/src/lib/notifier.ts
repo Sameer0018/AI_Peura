@@ -1,8 +1,4 @@
-import { BrevoClient } from '@getbrevo/brevo';
-
-const client = new BrevoClient({
-    apiKey: process.env.BREVO_API_KEY || ''
-});
+import axios from 'axios';
 
 export async function sendApprovalEmail(scripts: any[]) {
     if (!process.env.BREVO_API_KEY || process.env.BREVO_API_KEY.includes('your_')) {
@@ -15,17 +11,19 @@ export async function sendApprovalEmail(scripts: any[]) {
         const displayTitle = item.title || 'New Content Idea';
         
         return `
-            <div style="background: #ffffff; border-radius: 16px; margin-bottom: 30px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #f0f0f0;">
+            <div style="background: #ffffff; border-radius: 16px; margin-bottom: 30px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border: 1px solid #f0f0f0; font-family: sans-serif;">
                 <div style="background: #000; padding: 15px 20px;">
-                    <h3 style="color: #ffffff; margin: 0; font-family: sans-serif;">${displayTitle}</h3>
+                    <h3 style="color: #ffffff; margin: 0;">${displayTitle}</h3>
                 </div>
                 <div style="padding: 20px;">
                     <p style="color: #666; font-size: 13px;"><strong>Inspiration:</strong> ${displaySummary}...</p>
                     <div style="background: #f8fafc; border-left: 4px solid #000; padding: 15px; border-radius: 8px;">
-                        <p><strong>🎬 REEL SCRIPT</strong></p>
+                        <p style="margin-top: 0;"><strong>🎬 ${item.contentType || 'VIDEO'} SCRIPT</strong></p>
                         <p><strong>Hook:</strong> ${item.script?.hook}</p>
-                        <p><strong>Mid:</strong> ${item.script?.mid}</p>
-                        <p><strong>CTA:</strong> ${item.script?.cta}</p>
+                        <p><strong>Storyline:</strong> ${item.script?.storyline || item.script?.mid}</p>
+                        <p><strong>Visual Direction:</strong> ${item.script?.visualDirection || 'N/A'}</p>
+                        <p><strong>Product Framing:</strong> ${item.script?.productFraming || 'N/A'}</p>
+                        <p style="margin-bottom: 0;"><strong>CTA:</strong> ${item.script?.cta}</p>
                     </div>
                 </div>
             </div>
@@ -36,8 +34,12 @@ export async function sendApprovalEmail(scripts: any[]) {
         <html>
         <body style="background-color: #f1f5f9; padding: 40px; font-family: sans-serif;">
             <div style="max-width: 600px; margin: 0 auto;">
-                <h1 style="text-align: center;">PEURA OPTICALS</h1>
+                <h1 style="text-align: center; color: #000; letter-spacing: 2px;">PEURA OPTICALS</h1>
+                <p style="text-align: center; color: #64748b; margin-bottom: 40px;">New strategic creative direction generated for your campaign.</p>
                 ${scriptCards}
+                <div style="text-align: center; margin-top: 40px; font-size: 12px; color: #94a3b8;">
+                    Sent by Peura AI Content Engine
+                </div>
             </div>
         </body>
         </html>
@@ -47,15 +49,20 @@ export async function sendApprovalEmail(scripts: any[]) {
     const toRecipients = recipientEmails.map(email => ({ email }));
 
     try {
-        await client.transactionalEmails.sendTransacEmail({
-            subject: "✨ NEW: Viral Reel Scripts for Peura Opticals",
+        await axios.post('https://api.brevo.com/v3/smtp/email', {
+            subject: "✨ NEW: Strategic Content for Peura Opticals",
             htmlContent: htmlContent,
             sender: { name: "Peura AI", email: process.env.SENDER_EMAIL || 'info@peura.com' },
             to: toRecipients
+        }, {
+            headers: {
+                'api-key': process.env.BREVO_API_KEY,
+                'Content-Type': 'application/json'
+            }
         });
         return true;
-    } catch (error) {
-        console.error('Error sending email:', error);
+    } catch (error: any) {
+        console.error('Brevo API Error:', error.response?.data || error.message);
         return false;
     }
 }

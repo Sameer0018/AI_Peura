@@ -19,19 +19,16 @@ export const updateIdea = async (req: Request, res: Response) => {
   try {
     await connectDB();
     const body = req.body;
+    const updateObj: any = { $set: body };
+    
+    // If generationStatus is completed, increment the count
+    if (body.generationStatus === 'completed') {
+      updateObj.$inc = { generationCount: 1 };
+    }
+
     const updatedIdea = await Idea.findByIdAndUpdate(
       req.params.id,
-      { 
-        $set: { 
-          scheduledDate: body.scheduledDate,
-          contentType: body.contentType,
-          title: body.title,
-          isDraft: body.isDraft,
-          script: body.script,
-          generationStatus: body.generationStatus
-        } 
-
-      },
+      updateObj,
       { new: true }
     );
     
@@ -40,6 +37,18 @@ export const updateIdea = async (req: Request, res: Response) => {
     }
     return res.json(updatedIdea);
   } catch (error: any) {
+    return res.status(500).json({ error: error.message });
+  }
+};
+
+export const createIdea = async (req: Request, res: Response) => {
+  try {
+    await connectDB();
+    const body = req.body;
+    const newIdea = await Idea.create(body);
+    return res.status(201).json(newIdea);
+  } catch (error: any) {
+    console.error('Create Idea Error:', error);
     return res.status(500).json({ error: error.message });
   }
 };

@@ -12,12 +12,16 @@ export interface IIdea {
   status: 'new' | 'approved' | 'ignored';
   videoUrl?: string;
   generationStatus?: 'none' | 'pending' | 'completed' | 'failed';
+  generationCount?: number;
   script?: {
     hook: string;
-    mid: string;
+    storyline: string;
+    visualDirection: string;
+    productFraming: string;
     cta: string;
+    variations: { hook: string; angle: string }[];
     caption: string;
-    hashtags: string;
+    hashtags: string[];
   };
 }
 
@@ -41,12 +45,16 @@ const IdeaSchema = new Schema<IIdea>({
     enum: ['none', 'pending', 'completed', 'failed'], 
     default: 'none' 
   },
+  generationCount: { type: Number, default: 0 },
   script: {
     hook: String,
-    mid: String,
+    storyline: String,
+    visualDirection: String,
+    productFraming: String,
     cta: String,
+    variations: [{ hook: String, angle: String }],
     caption: String,
-    hashtags: String,
+    hashtags: [String],
   },
 });
 
