@@ -8,7 +8,7 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
   const [idea, setIdea] = useState<any>(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://peurabackend.onrender.com';
 
   useEffect(() => {
     fetch(`${API_URL}/api/idea/${id}`)

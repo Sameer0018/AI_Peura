@@ -15,7 +15,7 @@ export default function PeuraDashboard() {
     fetchIdeas();
   }, []);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://peurabackend.onrender.com';
 
   const fetchIdeas = async () => {
     const res = await fetch(`${API_URL}/api/scrape`);

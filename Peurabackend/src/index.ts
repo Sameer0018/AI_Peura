@@ -21,6 +21,11 @@ app.use(express.json());
 // Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Root Endpoint
+app.get('/', (req, res) => {
+  res.send('Hello from AiPeura');
+});
+
 // Routes
 import ideaRoutes from './routes/idea';
 import scrapeRoutes from './routes/scrape';
