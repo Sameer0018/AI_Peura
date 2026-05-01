@@ -27,68 +27,88 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
     }, 3000);
   };
 
-  if (!idea) return <div className="loading">Loading Peura Plan...</div>;
+  if (!idea) return (
+    <div className="flex items-center justify-center min-h-screen text-xl font-bold text-accent">
+      Loading Peura Plan...
+    </div>
+  );
 
   return (
-    <div className="detail-container">
-      <header className="detail-header">
-        <button onClick={() => window.close()} className="back-btn">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <header className="flex justify-between items-center px-10 py-5 bg-white border-b border-slate-200">
+        <button onClick={() => window.close()} className="flex items-center gap-2 bg-transparent border-none cursor-pointer font-semibold text-slate-600 hover:text-slate-900 transition-colors">
           <ArrowLeft size={18} /> Close Window
         </button>
-        <div className="header-actions">
-          <button className="action-btn"><Share2 size={18} /></button>
-          <button className="action-btn"><Download size={18} /></button>
+        <div className="flex gap-4">
+          <button className="bg-slate-100 border-none w-10 h-10 rounded-xl cursor-pointer flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-colors">
+            <Share2 size={18} />
+          </button>
+          <button className="bg-slate-100 border-none w-10 h-10 rounded-xl cursor-pointer flex items-center justify-center text-slate-700 hover:bg-slate-200 transition-colors">
+            <Download size={18} />
+          </button>
         </div>
       </header>
 
-      <main className="detail-content">
-        <div className="content-left">
-          <div className="badge-row">
-            <span className="type-badge">{idea.contentType}</span>
-            <span className="date-badge">
-              <Calendar size={14} /> 
-              {new Date(idea.scheduledDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+      <main className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-16 p-16 max-w-[1400px] mx-auto">
+        <div className="flex flex-col">
+          <div className="flex gap-4 mb-8 items-center">
+            <span className="bg-amber-50 text-accent px-4 py-1.5 rounded-full text-xs font-extrabold border border-amber-100 uppercase tracking-wide">
+              {idea.contentType}
             </span>
+            {idea.scheduledDate && (
+              <span className="flex items-center gap-2 text-slate-500 text-sm font-medium">
+                <Calendar size={14} /> 
+                {new Date(idea.scheduledDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+              </span>
+            )}
           </div>
           
-          <h1 className="title">{idea.title}</h1>
+          <h1 className="text-[42px] font-black leading-tight mb-10 text-slate-900 tracking-tight">
+            {idea.title}
+          </h1>
           
-          <div className="script-section">
-            <div className="script-card">
-              <h3>The Hook</h3>
-              <p>{idea.script?.hook}</p>
+          <div className="flex flex-col gap-6">
+            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm transition-shadow hover:shadow-md">
+              <h3 className="text-[11px] uppercase text-accent tracking-widest mb-3 font-extrabold">The Hook</h3>
+              <p className="text-[17px] leading-relaxed text-slate-700 font-medium">{idea.script?.hook}</p>
             </div>
-            <div className="script-card">
-              <h3>The Content</h3>
-              <p>{idea.script?.mid}</p>
+            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm transition-shadow hover:shadow-md">
+              <h3 className="text-[11px] uppercase text-accent tracking-widest mb-3 font-extrabold">The Content</h3>
+              <p className="text-[17px] leading-relaxed text-slate-700 font-medium">{idea.script?.mid}</p>
             </div>
-            <div className="script-card">
-              <h3>Call to Action</h3>
-              <p>{idea.script?.cta}</p>
+            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm transition-shadow hover:shadow-md">
+              <h3 className="text-[11px] uppercase text-accent tracking-widest mb-3 font-extrabold">Call to Action</h3>
+              <p className="text-[17px] leading-relaxed text-slate-700 font-bold">{idea.script?.cta}</p>
             </div>
-            <div className="script-card secondary">
-              <h3>Caption & Hashtags</h3>
-              <p>{idea.script?.caption}</p>
-              <div className="hashtags">{idea.script?.hashtags}</div>
+            <div className="bg-slate-50 p-8 rounded-3xl border border-dashed border-slate-200">
+              <h3 className="text-[11px] uppercase text-accent tracking-widest mb-3 font-extrabold">Caption & Hashtags</h3>
+              <p className="text-[17px] leading-relaxed text-slate-700 font-medium mb-4">{idea.script?.caption}</p>
+              <div className="text-sm text-accent font-bold">{idea.script?.hashtags}</div>
             </div>
           </div>
         </div>
 
-        <div className="content-right">
-          <div className="preview-container glass">
+        <div className="flex flex-col">
+          <div className="bg-white rounded-[32px] h-[600px] flex items-center justify-center border border-slate-100 shadow-xl overflow-hidden sticky top-10">
             {idea.generationStatus === 'completed' ? (
-              <div className="video-placeholder">
-                <Play size={48} color="var(--accent)" />
-                <p>Video Generated Successfully</p>
-                <button className="btn-secondary">Watch Preview</button>
+              <div className="text-center p-10 flex flex-col items-center gap-6">
+                <div className="w-24 h-24 bg-amber-50 rounded-full flex items-center justify-center shadow-inner">
+                  <Play size={48} className="text-accent ml-2" />
+                </div>
+                <p className="text-xl font-bold text-slate-800">Video Generated Successfully</p>
+                <button className="bg-slate-900 text-white border-none px-8 py-3 rounded-xl font-bold cursor-pointer hover:bg-slate-800 transition-colors shadow-lg shadow-slate-900/20 mt-4">
+                  Watch Preview
+                </button>
               </div>
             ) : (
-              <div className="generation-placeholder">
-                <Video size={48} color="var(--border)" />
-                <h2>AI Video Generation</h2>
-                <p>Ready to transform this script into a premium video using Google Veo?</p>
+              <div className="text-center p-10 flex flex-col items-center max-w-sm mx-auto">
+                <Video size={64} className="text-slate-300 mb-6" />
+                <h2 className="text-2xl font-black text-slate-800 mb-4">AI Video Generation</h2>
+                <p className="text-slate-500 leading-relaxed font-medium mb-10">
+                  Ready to transform this script into a premium video using Google Veo?
+                </p>
                 <button 
-                  className="btn-primary" 
+                  className="bg-accent text-white border-none px-8 py-4 rounded-2xl font-bold cursor-pointer transition-all shadow-lg shadow-accent/20 hover:-translate-y-1 hover:shadow-accent/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full text-lg"
                   onClick={handleGenerate}
                   disabled={isGenerating}
                 >
@@ -99,40 +119,6 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
       </main>
-
-      <style jsx>{`
-        .detail-container { min-height: 100vh; background: #f8f9fa; color: #1a1a1a; font-family: 'Outfit', sans-serif; }
-        .detail-header { display: flex; justify-content: space-between; padding: 20px 40px; border-bottom: 1px solid #eee; background: #fff; }
-        .back-btn { display: flex; align-items: center; gap: 8px; background: none; border: none; cursor: pointer; font-weight: 600; color: #666; }
-        .header-actions { display: flex; gap: 15px; }
-        .action-btn { background: #f1f5f9; border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #334155; }
-        
-        .detail-content { display: grid; grid-template-columns: 1fr 450px; gap: 60px; padding: 60px 40px; max-width: 1400px; margin: 0 auto; }
-        
-        .badge-row { display: flex; gap: 15px; margin-bottom: 25px; }
-        .type-badge { background: #fffbeb; color: #b8860b; padding: 6px 16px; border-radius: 100px; font-size: 12px; font-weight: 800; border: 1px solid #fef3c7; text-transform: uppercase; }
-        .date-badge { display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 14px; font-weight: 500; }
-        
-        .title { font-size: 42px; font-weight: 900; line-height: 1.1; margin-bottom: 40px; color: #000; letter-spacing: -1px; }
-        
-        .script-section { display: flex; flex-direction: column; gap: 25px; }
-        .script-card { background: #fff; padding: 30px; border-radius: 20px; border: 1px solid #eee; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-        .script-card.secondary { background: #fafafa; border-style: dashed; }
-        .script-card h3 { font-size: 11px; text-transform: uppercase; color: #b8860b; letter-spacing: 1px; margin-bottom: 12px; font-weight: 800; }
-        .script-card p { font-size: 17px; line-height: 1.6; color: #334155; }
-        .hashtags { margin-top: 15px; font-size: 14px; color: #b8860b; font-weight: 600; }
-        
-        .preview-container { background: #fff; border-radius: 30px; height: 600px; display: flex; align-items: center; justify-content: center; border: 1px solid #eee; box-shadow: 0 10px 40px rgba(0,0,0,0.05); overflow: hidden; position: sticky; top: 40px; }
-        .generation-placeholder, .video-placeholder { text-align: center; padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-        .generation-placeholder h2 { font-size: 24px; font-weight: 800; }
-        .generation-placeholder p { color: #64748b; max-width: 300px; line-height: 1.5; }
-        
-        .btn-primary { background: #b8860b; color: #fff; border: none; padding: 15px 40px; border-radius: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s; box-shadow: 0 5px 15px rgba(184, 134, 11, 0.3); }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(184, 134, 11, 0.4); }
-        .btn-secondary { background: #000; color: #fff; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 600; cursor: pointer; }
-        
-        .loading { display: flex; align-items: center; justify-content: center; height: 100vh; font-size: 20px; font-weight: 700; color: #b8860b; }
-      `}</style>
     </div>
   );
 }
