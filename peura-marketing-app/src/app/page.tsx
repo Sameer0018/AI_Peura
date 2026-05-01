@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, LayoutDashboard, Play, Settings, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Calendar, LayoutDashboard, Play, Settings, RefreshCw, Sparkles, CheckCircle2, Menu, X } from 'lucide-react';
 
 const D2C_STRATEGY: Record<number, { format: string, color: string, tip: string }> = {
   0: { format: 'Story', color: 'bg-amber-100 text-amber-800 border-amber-200', tip: 'Sunday: Casual & Behind the scenes' },
@@ -17,7 +17,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('calendar');
   const [ideas, setIdeas] = useState<any[]>([]);
   const [selectedIdea, setSelectedIdea] = useState<any | null>(null);
-  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error' } | null>(null);
+  const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error', action?: { label: string, tab: string } } | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isScraping, setIsScraping] = useState(false);
 
   useEffect(() => {
     if (notification) {
@@ -43,11 +45,28 @@ export default function App() {
     }
   };
 
+  const handleScrape = async () => {
+    setIsScraping(true);
+    try {
+      const res = await fetch(`${API_URL}/api/scrape`, { method: 'POST' });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      
+      setNotification({ message: data.message || "Scraping complete!", type: 'success' });
+      await fetchIdeas();
+    } catch (e: any) {
+      console.error("Scrape Failed:", e);
+      setNotification({ message: `Scrape Failed: ${e.message}`, type: 'error' });
+    } finally {
+      setIsScraping(false);
+    }
+  };
+
   const handleGenerate = async (id: string) => {
     const idea = ideas.find(i => i._id === id);
     if (!idea) return;
 
-    setIdeas(ideas.map(i => i._id === id ? { ...i, generationStatus: 'pending' } : i));
+    setIdeas(prev => prev.map(i => i._id === id ? { ...i, generationStatus: 'pending' } : i));
     setSelectedIdea((prev: any) => ({ ...prev, generationStatus: 'pending' }));
     
     try {
@@ -60,39 +79,70 @@ export default function App() {
       const { script, error } = await res.json();
       if (error) throw new Error(error);
 
-      // Update the idea in the database with the new script
-      const updated = await handleUpdateIdea(id, { 
-        script, 
-        generationStatus: 'completed' 
-      });
+      // Create a NEW idea record for the generated content
+      const newCreatedIdea = {
+        ...idea,
+        _id: undefined, // Let backend generate new ID
+        script,
+        generationStatus: 'completed',
+        generationCount: (idea.generationCount || 0) + 1,
+        status: 'approved'
+      };
 
-      setNotification({ message: "Peura Script Generated Successfully!", type: 'success' });
+      const created = await handleCreateIdea(newCreatedIdea);
+      
+      if (created) {
+        // Keep the original idea in the calendar, but maybe update its locally tracked count
+        setIdeas(prev => prev.map(i => i._id === id ? { ...i, generationStatus: 'none', generationCount: (i.generationCount || 0) + 1 } : i));
 
-      // Send email notification
-      try {
-        const notifyRes = await fetch(`${API_URL}/api/notify/success`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
+        setNotification({ 
+          message: "Peura Script Generated Successfully!", 
+          type: 'success',
+          action: { label: 'View in CreatedPeura', tab: 'created' }
         });
-        const notifyData = await notifyRes.json();
-        if (notifyData.warning === 'EMAIL_FAILED') {
-          setNotification({ message: "Script saved, but email failed. Check your Brevo key!", type: 'error' });
+
+        // Send email notification
+        try {
+          const notifyRes = await fetch(`${API_URL}/api/notify/success`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: created._id })
+          });
+          const notifyData = await notifyRes.json();
+          if (notifyData.warning === 'EMAIL_FAILED') {
+            setNotification({ message: "Script saved, but email failed. Check your Brevo key!", type: 'error' });
+          }
+        } catch (emailErr) {
+          console.error("Email notification failed:", emailErr);
         }
-      } catch (emailErr) {
-        console.error("Email notification failed:", emailErr);
       }
 
 
     } catch (e: any) {
       console.error("AI Generation Failed:", e);
-      setIdeas(ideas.map(i => i._id === id ? { ...i, generationStatus: 'failed' } : i));
+      setIdeas(prev => prev.map(i => i._id === id ? { ...i, generationStatus: 'failed' } : i));
       setSelectedIdea((prev: any) => ({ ...prev, generationStatus: 'failed' }));
       setNotification({ message: `Generation Failed: ${e.message}`, type: 'error' });
     }
   };
 
 
+
+  const handleCreateIdea = async (newIdea: any) => {
+    try {
+      const res = await fetch(`${API_URL}/api/idea/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newIdea)
+      });
+      const created = await res.json();
+      setIdeas(prev => [created, ...prev]);
+      return created;
+    } catch (e) {
+      console.error(e);
+      return null;
+    }
+  };
 
   const handleUpdateIdea = async (id: string, updates: any) => {
     try {
@@ -102,7 +152,7 @@ export default function App() {
         body: JSON.stringify(updates)
       });
       const updated = await res.json();
-      setIdeas(ideas.map(i => i._id === id ? updated : i));
+      setIdeas(prev => prev.map(i => i._id === id ? updated : i));
       setSelectedIdea(updated);
       return updated;
     } catch (e) {
@@ -113,29 +163,61 @@ export default function App() {
 
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 p-8 shadow-sm flex flex-col">
-        <div className="text-2xl font-black uppercase tracking-wider mb-12 text-black">
+    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans relative overflow-x-hidden">
+      {/* Mobile Header */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-40">
+        <div className="text-xl font-black uppercase tracking-wider text-black">
           Peura <span className="text-accent">AI</span>
+        </div>
+        <button 
+          onClick={() => setIsSidebarOpen(true)}
+          className="p-2 hover:bg-slate-50 rounded-lg"
+        >
+          <Menu size={24} />
+        </button>
+      </header>
+
+      {/* Sidebar Overlay (Mobile) */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 lg:hidden"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 p-8 shadow-2xl lg:shadow-sm flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}>
+        <div className="flex justify-between items-center mb-12">
+          <div className="text-2xl font-black uppercase tracking-wider text-black">
+            Peura <span className="text-accent">AI</span>
+          </div>
+          <button 
+            onClick={() => setIsSidebarOpen(false)}
+            className="lg:hidden p-2 hover:bg-slate-50 rounded-lg text-slate-400"
+          >
+            <X size={20} />
+          </button>
         </div>
         
         <nav className="flex-1 space-y-2">
           <button 
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'calendar' ? 'bg-amber-50 text-accent' : 'text-slate-500 hover:bg-slate-50 hover:text-accent'}`}
-            onClick={() => setActiveTab('calendar')}
+            onClick={() => { setActiveTab('calendar'); setIsSidebarOpen(false); }}
           >
             <Calendar size={20} /> Smart Calendar
           </button>
           <button 
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'dashboard' ? 'bg-amber-50 text-accent' : 'text-slate-500 hover:bg-slate-50 hover:text-accent'}`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }}
           >
             <LayoutDashboard size={20} /> Dashboard
           </button>
           <button 
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'created' ? 'bg-amber-50 text-accent' : 'text-slate-500 hover:bg-slate-50 hover:text-accent'}`}
-            onClick={() => setActiveTab('created')}
+            onClick={() => { setActiveTab('created'); setIsSidebarOpen(false); }}
           >
             <CheckCircle2 size={20} /> CreatedPeura
           </button>
@@ -150,15 +232,25 @@ export default function App() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-10 overflow-y-auto">
-        <header className="flex justify-between items-center mb-10">
+      <main className="flex-1 p-5 lg:p-10 overflow-y-auto mt-16 lg:mt-0">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
             <div>
-                <h1 className="text-3xl font-black tracking-tight">Content Engine</h1>
-                <p className="text-slate-500 mt-1 font-medium">AI-powered marketing automation for D2C growth.</p>
+                <h1 className="text-2xl lg:text-3xl font-black tracking-tight">Content Engine</h1>
+                <p className="text-slate-500 mt-1 font-medium text-sm lg:text-base">AI-powered marketing automation for D2C growth.</p>
             </div>
-            <button className="bg-accent text-white px-7 py-3 rounded-xl font-bold shadow-lg shadow-accent/20 hover:-translate-y-0.5 hover:shadow-accent/30 transition-all">
-                + New Campaign
-            </button>
+            <div className="flex gap-3 w-full md:w-auto">
+                <button 
+                    onClick={handleScrape}
+                    disabled={isScraping}
+                    className="flex-1 md:flex-none border border-slate-200 bg-white text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                    <RefreshCw size={18} className={isScraping ? 'animate-spin' : ''} />
+                    {isScraping ? 'Scraping...' : 'Scrape New Ideas'}
+                </button>
+                <button className="flex-1 md:flex-none bg-accent text-white px-7 py-3 rounded-xl font-bold shadow-lg shadow-accent/20 hover:-translate-y-0.5 hover:shadow-accent/30 transition-all">
+                    + New Campaign
+                </button>
+            </div>
         </header>
 
         <div className="view-container">
@@ -171,7 +263,17 @@ export default function App() {
         {notification && (
             <div className={`fixed bottom-8 right-8 px-6 py-4 rounded-2xl shadow-2xl z-[100] flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5 duration-300 ${notification.type === 'success' ? 'bg-slate-900 text-white' : 'bg-rose-600 text-white'}`}>
                 {notification.type === 'success' ? <CheckCircle2 size={20} className="text-green-400" /> : <Sparkles size={20} className="text-rose-200" />}
-                <p className="font-bold text-sm">{notification.message}</p>
+                <div className="flex flex-col">
+                    <p className="font-bold text-sm">{notification.message}</p>
+                    {notification.action && (
+                        <button 
+                            onClick={() => { setActiveTab(notification.action!.tab); setNotification(null); }}
+                            className="text-[10px] font-black uppercase tracking-widest text-accent mt-1 hover:underline text-left"
+                        >
+                            {notification.action.label} →
+                        </button>
+                    )}
+                </div>
                 <button onClick={() => setNotification(null)} className="ml-4 opacity-50 hover:opacity-100">×</button>
             </div>
         )}
@@ -181,7 +283,7 @@ export default function App() {
         {selectedIdea && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedIdea(null)}>
                 <div className="bg-white rounded-[30px] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-                    <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white">
+                    <div className="px-6 py-4 lg:px-8 lg:py-6 border-b border-slate-100 flex justify-between items-center bg-white">
                         <div>
                             <h2 className="text-2xl font-black text-slate-900">Content Planning</h2>
                             <p className="text-xs text-slate-500 font-medium mt-1">Review and reschedule your daily content</p>
@@ -189,7 +291,7 @@ export default function App() {
                         <button className="text-slate-400 hover:text-black text-3xl transition-colors" onClick={() => setSelectedIdea(null)}>×</button>
                     </div>
                     
-                    <div className="flex-1 overflow-y-auto bg-slate-50 p-8 grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-10">
+                    <div className="flex-1 overflow-y-auto bg-slate-50 p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-10">
                         {/* Left Column: Editor */}
                         <div className="space-y-6">
                             <div className="space-y-2">
@@ -230,19 +332,44 @@ export default function App() {
                             </div>
 
                             <div className="mt-8">
-                                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-accent mb-4">Generated Peura Script</h3>
-                                <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-4">
+                                <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-accent mb-4">Strategic Creative Direction</h3>
+                                <div className="bg-white p-6 lg:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
                                     <div>
                                       <p className="text-[10px] font-black text-accent tracking-widest mb-1">HOOK</p>
-                                      <p className="text-[15px] text-slate-700 leading-relaxed font-medium">{selectedIdea.script?.hook}</p>
+                                      <p className="text-[15px] text-slate-700 leading-relaxed font-bold">{selectedIdea.script?.hook}</p>
                                     </div>
+                                    
                                     <div>
-                                      <p className="text-[10px] font-black text-accent tracking-widest mb-1 mt-4">STORY</p>
-                                      <p className="text-[15px] text-slate-700 leading-relaxed font-medium">{selectedIdea.script?.mid}</p>
+                                      <p className="text-[10px] font-black text-accent tracking-widest mb-1">STORYLINE (AD SCRIPT)</p>
+                                      <p className="text-[14px] text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{selectedIdea.script?.storyline || selectedIdea.script?.mid}</p>
                                     </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                                        <div>
+                                          <p className="text-[10px] font-black text-slate-400 tracking-widest mb-1">VISUAL DIRECTION</p>
+                                          <p className="text-[13px] text-slate-600 leading-relaxed">{selectedIdea.script?.visualDirection || 'N/A'}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-[10px] font-black text-slate-400 tracking-widest mb-1">PRODUCT FRAMING</p>
+                                          <p className="text-[13px] text-slate-600 leading-relaxed">{selectedIdea.script?.productFraming || 'N/A'}</p>
+                                        </div>
+                                    </div>
+
                                     <div>
-                                      <p className="text-[10px] font-black text-accent tracking-widest mb-1 mt-4">CTA</p>
-                                      <p className="text-[15px] text-slate-700 leading-relaxed font-medium font-bold">{selectedIdea.script?.cta}</p>
+                                      <p className="text-[10px] font-black text-accent tracking-widest mb-2">VARIATIONS / ANGLES</p>
+                                      <div className="space-y-2">
+                                        {selectedIdea.script?.variations?.map((v: any, i: number) => (
+                                            <div key={i} className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                                <p className="text-[13px] font-bold text-slate-800">"{v.hook}"</p>
+                                                <p className="text-[10px] text-slate-500 font-medium uppercase mt-1">Angle: {v.angle}</p>
+                                            </div>
+                                        )) || <p className="text-xs text-slate-400 italic">No variations generated.</p>}
+                                      </div>
+                                    </div>
+
+                                    <div>
+                                      <p className="text-[10px] font-black text-accent tracking-widest mb-1">CTA</p>
+                                      <p className="text-[14px] text-slate-900 font-black">{selectedIdea.script?.cta}</p>
                                     </div>
                                 </div>
                             </div>
@@ -285,6 +412,12 @@ export default function App() {
                                               >
                                                 Download {selectedIdea.contentType === 'Video' ? 'MP4' : 'JPG'}
                                               </a>
+                                              <button 
+                                                onClick={() => handleGenerate(selectedIdea._id)}
+                                                className="bg-white/20 backdrop-blur-md border border-white/30 text-white px-8 py-3.5 rounded-xl font-bold hover:bg-white/30 transition-all flex items-center gap-2"
+                                              >
+                                                <RefreshCw size={18} /> Regenerate
+                                              </button>
                                             </div>
                                         </div>
                                     </>
@@ -326,7 +459,8 @@ function CalendarView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (id
   const calendarDays = Array.from({ length: 35 }, (_, i) => i + 1 - startDay);
   
   return (
-    <div className="grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
+    <div className="overflow-x-auto pb-4 -mx-5 px-5 lg:mx-0 lg:px-0">
+      <div className="min-w-[800px] grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
       {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
         <div key={day} className="bg-slate-50 py-4 text-center text-xs font-extrabold uppercase tracking-widest text-slate-400 border-b border-slate-200">
           {day}
@@ -382,13 +516,14 @@ function CalendarView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (id
           </div>
         );
       })}
+      </div>
     </div>
   );
 }
 
 function DashboardView({ ideasCount }: { ideasCount: number }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <div className="bg-white/70 backdrop-blur-md border border-slate-100 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
         <h4 className="text-slate-500 font-bold uppercase text-xs tracking-wider mb-3">Content Planned</h4>
         <div className="text-5xl font-black text-slate-800">{ideasCount}</div>
@@ -405,7 +540,7 @@ function DashboardView({ ideasCount }: { ideasCount: number }) {
   );
 }
 function CreatedPeuraView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (idea: any) => void }) {
-  const createdIdeas = ideas.filter(i => i.generationStatus === 'completed');
+  const createdIdeas = ideas.filter(i => i.generationStatus === 'completed' || (i.script && (i.script.hook || i.script.storyline)));
   
   // Group by date
   const grouped = createdIdeas.reduce((acc: any, idea) => {
@@ -443,12 +578,19 @@ function CreatedPeuraView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea:
                 onClick={() => onSelectIdea(idea)}
               >
                 <div className="flex justify-between items-start mb-4">
-                  <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    idea.contentType === 'Video' ? 'bg-rose-50 text-rose-600' :
-                    idea.contentType === 'Carousel' ? 'bg-violet-50 text-violet-600' :
-                    idea.contentType === 'Post' ? 'bg-sky-50 text-sky-600' : 'bg-amber-50 text-amber-600'
-                  }`}>
-                    {idea.contentType}
+                  <div className="flex items-center gap-2">
+                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        idea.contentType === 'Video' ? 'bg-rose-50 text-rose-600' :
+                        idea.contentType === 'Carousel' ? 'bg-violet-50 text-violet-600' :
+                        idea.contentType === 'Post' ? 'bg-sky-50 text-sky-600' : 'bg-amber-50 text-amber-600'
+                    }`}>
+                        {idea.contentType}
+                    </div>
+                    {idea.generationCount > 0 && (
+                        <div className="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-1 rounded-md">
+                            #{idea.generationCount}
+                        </div>
+                    )}
                   </div>
                   <div className="text-slate-300 group-hover:text-accent transition-colors">
                     <Play size={18} />

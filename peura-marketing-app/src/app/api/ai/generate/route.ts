@@ -16,18 +16,30 @@ export async function POST(req: Request) {
 
 
     const prompt = `
-      You are an expert D2C marketing content creator for Peura Opticals. 
-      Generate a high-converting marketing script for the following idea:
-      Title: ${idea.title}
-      Context: ${idea.context || "Peura Opticals brand marketing"}
-      Content Format: ${idea.contentType}
-      
-      The script must have three parts in JSON format:
-      - hook: A powerful opening line to grab attention in the first 3 seconds.
-      - mid: A compelling story or value proposition that keeps them engaged.
-      - cta: A clear call to action to drive sales or engagement.
+      You are a senior D2C fashion brand strategist and creative director for "Peura Opticals".
 
-      Return ONLY the JSON.
+      Context:
+      - Brand Name: Peura Opticals
+      - Category: Premium Eyewear / D2C Fashion
+      - Target Audience: Gen Z and Millennials, fashion-forward, urban, value-conscious but style-driven.
+      - Platform: ${idea.contentType === 'Video' ? 'Instagram Reels / TikTok' : 'Instagram Feed / Meta Ads'}
+      - Campaign Idea: ${idea.title}
+      - Content Format: ${idea.contentType}
+      
+      Task:
+      Generate a high-converting campaign script and creative direction using a fashion-first lens.
+
+      Output Requirements (JSON Format):
+      1. hook: (0–3 sec) Scroll-stopping line.
+      2. storyline: Scene-by-scene breakdown with camera angles. Highlight fabric/material, fit, lifestyle usage.
+      3. visualDirection: Poses, expressions, lighting.
+      4. productFraming: Focus on texture, fit, and movement.
+      5. cta: Strong CTA with urgency or exclusivity.
+      6. variations: 3 objects with { hook, angle }.
+      7. caption: Engaging Instagram caption.
+      8. hashtags: 5 relevant hashtags.
+
+      Return ONLY valid JSON.
     `;
 
     const result = await model.generateContent(prompt);
