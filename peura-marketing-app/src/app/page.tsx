@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Calendar, LayoutDashboard, Play, Settings, RefreshCw, Sparkles, CheckCircle2, Menu, X, MessageCircle } from 'lucide-react';
+import { ThemeToggle } from '@/components/ThemeProvider';
 
 const D2C_STRATEGY: Record<number, { format: string, color: string, tip: string }> = {
   0: { format: 'Story', color: 'bg-amber-100 text-amber-800 border-amber-200', tip: 'Sunday: Casual & Behind the scenes' },
@@ -14,6 +16,7 @@ const D2C_STRATEGY: Record<number, { format: string, color: string, tip: string 
 };
 
 export default function App() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('calendar');
   const [ideas, setIdeas] = useState<any[]>([]);
   const [selectedIdea, setSelectedIdea] = useState<any | null>(null);
@@ -164,15 +167,15 @@ export default function App() {
 
 
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans relative overflow-x-hidden">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans relative overflow-x-hidden transition-colors duration-300">
       {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between z-40">
-        <div className="text-xl font-black uppercase tracking-wider text-black">
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between z-40">
+        <div className="text-xl font-black uppercase tracking-wider text-black dark:text-white">
           Peura <span className="text-accent">AI</span>
         </div>
         <button 
           onClick={() => setIsSidebarOpen(true)}
-          className="p-2 hover:bg-slate-50 rounded-lg"
+          className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300"
         >
           <Menu size={24} />
         </button>
@@ -188,16 +191,16 @@ export default function App() {
 
       {/* Sidebar */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 p-8 shadow-2xl lg:shadow-sm flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static
+        fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-8 shadow-2xl lg:shadow-sm flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static
         ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex justify-between items-center mb-12">
-          <div className="text-2xl font-black uppercase tracking-wider text-black">
+          <div className="text-2xl font-black uppercase tracking-wider text-black dark:text-white">
             Peura <span className="text-accent">AI</span>
           </div>
           <button 
             onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden p-2 hover:bg-slate-50 rounded-lg text-slate-400"
+            className="lg:hidden p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-400"
           >
             <X size={20} />
           </button>
@@ -205,19 +208,19 @@ export default function App() {
         
         <nav className="flex-1 space-y-2">
           <button 
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'calendar' ? 'bg-amber-50 text-accent' : 'text-slate-500 hover:bg-slate-50 hover:text-accent'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'calendar' ? 'bg-amber-50 dark:bg-amber-900/20 text-accent' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-accent'}`}
             onClick={() => { setActiveTab('calendar'); setIsSidebarOpen(false); }}
           >
             <Calendar size={20} /> Smart Calendar
           </button>
           <button 
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'dashboard' ? 'bg-amber-50 text-accent' : 'text-slate-500 hover:bg-slate-50 hover:text-accent'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'dashboard' ? 'bg-amber-50 dark:bg-amber-900/20 text-accent' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-accent'}`}
             onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }}
           >
             <LayoutDashboard size={20} /> Dashboard
           </button>
           <button 
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'created' ? 'bg-amber-50 text-accent' : 'text-slate-500 hover:bg-slate-50 hover:text-accent'}`}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'created' ? 'bg-amber-50 dark:bg-amber-900/20 text-accent' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-accent'}`}
             onClick={() => { setActiveTab('created'); setIsSidebarOpen(false); }}
           >
             <CheckCircle2 size={20} /> CreatedPeura
@@ -225,8 +228,12 @@ export default function App() {
         </nav>
 
 
-        <div className="mt-auto">
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 transition-all font-medium">
+        <div className="mt-auto space-y-2">
+            <div className="px-4 py-3 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Theme</span>
+              <ThemeToggle />
+            </div>
+            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium">
                 <Settings size={20} /> Settings
             </button>
         </div>
@@ -236,14 +243,14 @@ export default function App() {
       <main className="flex-1 p-5 lg:p-10 overflow-y-auto mt-16 lg:mt-0">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
             <div>
-                <h1 className="text-2xl lg:text-3xl font-black tracking-tight">Content Engine</h1>
-                <p className="text-slate-500 mt-1 font-medium text-sm lg:text-base">AI-powered marketing automation for D2C growth.</p>
+                <h1 className="text-2xl lg:text-3xl font-black tracking-tight dark:text-white">Content Engine</h1>
+                <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm lg:text-base">AI-powered marketing automation for D2C growth.</p>
             </div>
             <div className="flex gap-3 w-full md:w-auto">
                 <button 
                     onClick={handleScrape}
                     disabled={isScraping}
-                    className="flex-1 md:flex-none border border-slate-200 bg-white text-slate-700 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 md:flex-none border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 px-6 py-3 rounded-xl font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-all flex items-center justify-center gap-2 disabled:opacity-50 shadow-sm"
                 >
                     <RefreshCw size={18} className={isScraping ? 'animate-spin' : ''} />
                     {isScraping ? 'Scraping...' : 'Scrape New Ideas'}
@@ -283,25 +290,32 @@ export default function App() {
         {/* Content Planning Modal */}
         {selectedIdea && (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setSelectedIdea(null)}>
-                <div className="bg-white rounded-[30px] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-                    <div className="px-6 py-4 lg:px-8 lg:py-6 border-b border-slate-100 flex justify-between items-center bg-white">
+        <div className="bg-white dark:bg-slate-900 rounded-[30px] w-full max-w-5xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                    <div className="px-6 py-4 lg:px-8 lg:py-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-white dark:bg-slate-900">
                         <div>
-                            <h2 className="text-2xl font-black text-slate-900">Content Planning</h2>
-                            <p className="text-xs text-slate-500 font-medium mt-1">Review and reschedule your daily content</p>
+                            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Content Planning</h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Review and reschedule your daily content</p>
                         </div>
-                        <button className="text-slate-400 hover:text-black text-3xl transition-colors" onClick={() => setSelectedIdea(null)}>×</button>
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={() => router.push(`/edit-script/${selectedIdea._id}`)}
+                                className="bg-slate-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 transition-all flex items-center gap-2"
+                            >
+                                <Sparkles size={16} /> Edit in Studio
+                            </button>
+                            <button className="text-slate-400 hover:text-black dark:hover:text-white text-3xl transition-colors" onClick={() => setSelectedIdea(null)}>×</button>
+                        </div>
                     </div>
                     
-                    <div className="flex-1 overflow-y-auto bg-slate-50 p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-10">
+                    <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-6 lg:p-8 grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-10">
                         {/* Left Column: Editor */}
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <label className="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500">Scheduled Date</label>
                                 <input 
                                     type="date" 
-                                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white text-slate-800 font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all shadow-sm"
+                                    className="w-full px-5 py-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all shadow-sm"
                                     value={selectedIdea.scheduledDate ? new Date(selectedIdea.scheduledDate).toISOString().split('T')[0] : ''} 
-                                    onChange={(e) => handleUpdateIdea(selectedIdea._id, { scheduledDate: e.target.value })}
                                 />
                             </div>
                             
@@ -316,7 +330,7 @@ export default function App() {
                                   )}
                                 </div>
                                 <select 
-                                    className={`w-full px-5 py-3.5 rounded-2xl border bg-white text-slate-800 font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all shadow-sm ${selectedIdea.scheduledDate && selectedIdea.contentType === D2C_STRATEGY[new Date(selectedIdea.scheduledDate).getDay()].format ? 'border-green-400 ring-1 ring-green-400 bg-green-50' : 'border-slate-200'}`}
+                                    className={`w-full px-5 py-3.5 rounded-2xl border bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-medium focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all shadow-sm ${selectedIdea.scheduledDate && selectedIdea.contentType === D2C_STRATEGY[new Date(selectedIdea.scheduledDate).getDay()].format ? 'border-green-400 ring-1 ring-green-400 bg-green-50 dark:bg-green-900/20' : 'border-slate-200 dark:border-slate-800'}`}
                                     value={selectedIdea.contentType}
                                     onChange={(e) => handleUpdateIdea(selectedIdea._id, { contentType: e.target.value })}
                                 >
@@ -334,15 +348,15 @@ export default function App() {
 
                             <div className="mt-8">
                                 <h3 className="text-[11px] font-extrabold uppercase tracking-wider text-accent mb-4">Strategic Creative Direction</h3>
-                                <div className="bg-white p-6 lg:p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
+                                <div className="bg-white dark:bg-slate-900 p-6 lg:p-8 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm space-y-6">
                                     <div>
                                       <p className="text-[10px] font-black text-accent tracking-widest mb-1">HOOK</p>
-                                      <p className="text-[15px] text-slate-700 leading-relaxed font-bold">{selectedIdea.script?.hook}</p>
+                                      <p className="text-[15px] text-slate-700 dark:text-slate-300 leading-relaxed font-bold">{selectedIdea.script?.hook}</p>
                                     </div>
                                     
                                     <div>
                                       <p className="text-[10px] font-black text-accent tracking-widest mb-1">STORYLINE (AD SCRIPT)</p>
-                                      <p className="text-[14px] text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">{selectedIdea.script?.storyline || selectedIdea.script?.mid}</p>
+                                      <p className="text-[14px] text-slate-600 dark:text-slate-400 leading-relaxed font-medium whitespace-pre-wrap">{selectedIdea.script?.storyline || selectedIdea.script?.mid}</p>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
@@ -394,7 +408,7 @@ export default function App() {
                                         </div>
 
                                         <div className="z-20 flex flex-col items-center p-10">
-                                            <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-2xl cursor-pointer hover:scale-110 transition-all border border-white/30">
+                                            <div className="w-20 h-20 bg-white/20 dark:bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center mb-6 shadow-2xl cursor-pointer hover:scale-110 transition-all border border-white/30 dark:border-white/10">
                                               {selectedIdea.contentType === 'Video' ? <Play size={32} fill="white" className="ml-1" /> : <Sparkles size={32} className="text-white" />}
                                             </div>
                                             <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">
@@ -483,63 +497,119 @@ function CalendarView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (id
   const calendarDays = Array.from({ length: 35 }, (_, i) => i + 1 - startDay);
   
   return (
-    <div className="overflow-x-auto pb-4 -mx-5 px-5 lg:mx-0 lg:px-0">
-      <div className="min-w-[800px] grid grid-cols-7 gap-px bg-slate-200 border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
-      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
-        <div key={day} className="bg-slate-50 py-4 text-center text-xs font-extrabold uppercase tracking-widest text-slate-400 border-b border-slate-200">
-          {day}
-        </div>
-      ))}
-      {calendarDays.map((dayNum, idx) => {
-        const dateStr = dayNum > 0 && dayNum <= daysInMonth ? `2026-05-${dayNum.toString().padStart(2, '0')}` : null;
-        const dayIdeas = ideas.filter(idea => idea.scheduledDate && idea.scheduledDate.startsWith(dateStr));
-        const dayOfWeek = idx % 7;
-        const recommendation = D2C_STRATEGY[dayOfWeek];
-        
-        return (
-          <div key={idx} className={`bg-white min-h-[160px] p-3 flex flex-col gap-2 transition-colors hover:bg-slate-50 ${dayNum <= 0 || dayNum > daysInMonth ? 'opacity-40 bg-slate-50' : ''}`}>
-            <div className="flex justify-between items-start mb-1">
-              <span className={`text-sm font-bold ${dayNum > 0 && dayNum <= daysInMonth ? 'text-slate-700' : 'text-slate-400'}`}>
-                {dayNum > 0 && dayNum <= daysInMonth ? dayNum : ''}
-              </span>
-              {dayNum > 0 && dayNum <= daysInMonth && (
-                <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${recommendation.color} whitespace-nowrap hidden xl:inline-block`} title={recommendation.tip}>
-                  ★ {recommendation.format}
-                </span>
-              )}
-            </div>
-            
-            <div className="flex flex-col gap-1.5 flex-1">
-              {dayIdeas.map((idea, i) => {
-                // Determine styling based on content type
-                let typeStyles = "bg-slate-50 border-slate-200 text-slate-600";
-                if (idea.contentType === 'Video') typeStyles = "border-l-4 border-l-rose-500 bg-rose-50 text-rose-700";
-                if (idea.contentType === 'Carousel') typeStyles = "border-l-4 border-l-violet-500 bg-violet-50 text-violet-700";
-                if (idea.contentType === 'Post') typeStyles = "border-l-4 border-l-sky-500 bg-sky-50 text-sky-700";
-                if (idea.contentType === 'Story') typeStyles = "border-l-4 border-l-amber-500 bg-amber-50 text-amber-700";
-
-                return (
-                  <div 
-                    key={i} 
-                    className={`px-2.5 py-2 rounded-lg border text-[11px] flex items-center gap-2 font-bold cursor-pointer shadow-sm hover:shadow transition-all ${typeStyles}`}
-                    onClick={() => onSelectIdea(idea)}
-                  >
-                    <Play size={10} className="shrink-0" />
-                    <span className="truncate">{idea.contentType}: {idea.title.substring(0, 20)}...</span>
-                  </div>
-                );
-              })}
-              
-              {/* If no idea is scheduled, show recommendation hint */}
-              {dayNum > 0 && dayNum <= daysInMonth && dayIdeas.length === 0 && (
-                <div className="mt-auto opacity-0 hover:opacity-100 transition-opacity p-2 text-center text-[10px] text-slate-400 border border-dashed border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
-                  + Plan {recommendation.format}
-                </div>
-              )}
-            </div>
+    <div className="pb-4">
+      {/* Desktop Calendar View (lg and up) */}
+      <div className="hidden lg:grid min-w-[800px] grid-cols-7 gap-px bg-slate-200 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 rounded-[24px] overflow-hidden shadow-sm">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, idx) => (
+          <div key={day} className="bg-slate-50 dark:bg-slate-900 py-4 text-center text-xs font-extrabold uppercase tracking-widest text-slate-400 border-b border-slate-200 dark:border-slate-800">
+            {day}
           </div>
-        );
-      })}
+        ))}
+        {calendarDays.map((dayNum, idx) => {
+          const dateStr = dayNum > 0 && dayNum <= daysInMonth ? `2026-05-${dayNum.toString().padStart(2, '0')}` : null;
+          const dayIdeas = ideas.filter(idea => idea.scheduledDate && idea.scheduledDate.startsWith(dateStr));
+          const dayOfWeek = idx % 7;
+          const recommendation = D2C_STRATEGY[dayOfWeek];
+          
+          return (
+            <div key={idx} className={`bg-white dark:bg-slate-900 min-h-[160px] p-3 flex flex-col gap-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800 ${dayNum <= 0 || dayNum > daysInMonth ? 'opacity-40 bg-slate-50 dark:bg-slate-950' : ''}`}>
+              <div className="flex justify-between items-start mb-1">
+                <span className={`text-sm font-bold ${dayNum > 0 && dayNum <= daysInMonth ? 'text-slate-700' : 'text-slate-400'}`}>
+                  {dayNum > 0 && dayNum <= daysInMonth ? dayNum : ''}
+                </span>
+                {dayNum > 0 && dayNum <= daysInMonth && (
+                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${recommendation.color} whitespace-nowrap hidden xl:inline-block`} title={recommendation.tip}>
+                    ★ {recommendation.format}
+                  </span>
+                )}
+              </div>
+              
+              <div className="flex flex-col gap-1.5 flex-1">
+                {dayIdeas.map((idea, i) => {
+                  let typeStyles = "bg-slate-50 border-slate-200 text-slate-600";
+                  if (idea.contentType === 'Video') typeStyles = "border-l-4 border-l-rose-500 bg-rose-50 text-rose-700";
+                  if (idea.contentType === 'Carousel') typeStyles = "border-l-4 border-l-violet-500 bg-violet-50 text-violet-700";
+                  if (idea.contentType === 'Post') typeStyles = "border-l-4 border-l-sky-500 bg-sky-50 text-sky-700";
+                  if (idea.contentType === 'Story') typeStyles = "border-l-4 border-l-amber-500 bg-amber-50 text-amber-700";
+
+                  return (
+                    <div 
+                      key={i} 
+                      className={`px-2.5 py-2 rounded-lg border text-[11px] flex items-center gap-2 font-bold cursor-pointer shadow-sm hover:shadow transition-all ${typeStyles}`}
+                      onClick={() => onSelectIdea(idea)}
+                    >
+                      <Play size={10} className="shrink-0" />
+                      <span className="truncate">{idea.contentType}: {idea.title.substring(0, 20)}...</span>
+                    </div>
+                  );
+                })}
+                
+                {dayNum > 0 && dayNum <= daysInMonth && dayIdeas.length === 0 && (
+                  <div className="mt-auto opacity-0 hover:opacity-100 transition-opacity p-2 text-center text-[10px] text-slate-400 border border-dashed border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50">
+                    + Plan {recommendation.format}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mobile/Tablet List View (up to lg) */}
+      <div className="lg:hidden flex flex-col gap-4">
+        {calendarDays.filter(dayNum => dayNum > 0 && dayNum <= daysInMonth).map((dayNum, idx) => {
+          const dateStr = `2026-05-${dayNum.toString().padStart(2, '0')}`;
+          const dayIdeas = ideas.filter(idea => idea.scheduledDate && idea.scheduledDate.startsWith(dateStr));
+          // Calculate correct day of week for mobile view
+          const dayOfWeek = (startDay + dayNum - 1) % 7;
+          const recommendation = D2C_STRATEGY[dayOfWeek];
+          
+          return (
+            <div key={`mob-${dayNum}`} className="bg-white dark:bg-slate-900 rounded-[20px] p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl">
+                    {dayNum}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold text-slate-800 uppercase tracking-wide">
+                      {['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek]}
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">May 2026</span>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-bold px-3 py-1.5 rounded-lg border ${recommendation.color}`}>
+                  {recommendation.format}
+                </span>
+              </div>
+              <div className="flex flex-col gap-2.5">
+                {dayIdeas.map((idea, i) => {
+                  let typeStyles = "bg-slate-50 border-slate-200 text-slate-600";
+                  if (idea.contentType === 'Video') typeStyles = "border-l-4 border-l-rose-500 bg-rose-50 text-rose-700";
+                  if (idea.contentType === 'Carousel') typeStyles = "border-l-4 border-l-violet-500 bg-violet-50 text-violet-700";
+                  if (idea.contentType === 'Post') typeStyles = "border-l-4 border-l-sky-500 bg-sky-50 text-sky-700";
+                  if (idea.contentType === 'Story') typeStyles = "border-l-4 border-l-amber-500 bg-amber-50 text-amber-700";
+
+                  return (
+                    <div 
+                      key={i} 
+                      className={`px-4 py-3 rounded-xl border text-sm flex items-center gap-3 font-bold cursor-pointer shadow-sm hover:shadow transition-all ${typeStyles}`}
+                      onClick={() => onSelectIdea(idea)}
+                    >
+                      <Play size={14} className="shrink-0" />
+                      <span className="truncate">{idea.contentType}: {idea.title}</span>
+                    </div>
+                  );
+                })}
+                {dayIdeas.length === 0 && (
+                  <div className="p-4 text-center text-xs text-slate-400 border border-dashed border-slate-200 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors">
+                    + Plan your {recommendation.format}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -548,13 +618,13 @@ function CalendarView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (id
 function DashboardView({ ideasCount }: { ideasCount: number }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div className="bg-white/70 backdrop-blur-md border border-slate-100 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-        <h4 className="text-slate-500 font-bold uppercase text-xs tracking-wider mb-3">Content Planned</h4>
-        <div className="text-5xl font-black text-slate-800">{ideasCount}</div>
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
+        <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider mb-3">Content Planned</h4>
+        <div className="text-5xl font-black text-slate-800 dark:text-white">{ideasCount}</div>
       </div>
-      <div className="bg-white/70 backdrop-blur-md border border-slate-100 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-        <h4 className="text-slate-500 font-bold uppercase text-xs tracking-wider mb-3">Videos Ready</h4>
-        <div className="text-5xl font-black text-slate-800">12</div>
+      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
+        <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider mb-3">Videos Ready</h4>
+        <div className="text-5xl font-black text-slate-800 dark:text-white">12</div>
       </div>
       <div className="bg-white/70 backdrop-blur-md border border-slate-100 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
         <h4 className="text-slate-500 font-bold uppercase text-xs tracking-wider mb-3">Production Goal</h4>
@@ -598,7 +668,7 @@ function CreatedPeuraView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea:
             {items.map((idea: any, idx: number) => (
               <div 
                 key={idx} 
-                className="bg-white p-6 rounded-[28px] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group"
+                className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group"
                 onClick={() => onSelectIdea(idea)}
               >
                 <div className="flex justify-between items-start mb-4">
@@ -620,8 +690,8 @@ function CreatedPeuraView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea:
                     <Play size={18} />
                   </div>
                 </div>
-                <h4 className="font-bold text-slate-800 line-clamp-2 mb-3 leading-tight">{idea.title}</h4>
-                <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed mb-4">{idea.script?.hook}</p>
+                <h4 className="font-bold text-slate-800 dark:text-slate-100 line-clamp-2 mb-3 leading-tight">{idea.title}</h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4">{idea.script?.hook}</p>
                 <div className="flex items-center gap-2 text-[10px] font-bold text-green-600 bg-green-50 w-fit px-3 py-1.5 rounded-lg">
                   <CheckCircle2 size={12} /> AI Script Ready
                 </div>
