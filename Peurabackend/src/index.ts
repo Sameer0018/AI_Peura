@@ -9,11 +9,17 @@ import connectDB from './lib/mongodb';
 // Connect to MongoDB
 connectDB();
 
+import swaggerUi from 'swagger-ui-express';
+import swaggerSpec from './swagger';
+
 const app = express();
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Routes
 import ideaRoutes from './routes/idea';

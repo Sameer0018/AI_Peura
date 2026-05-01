@@ -1,76 +1,47 @@
 import express from 'express';
-import connectDB from '../lib/mongodb';
-import Idea from '../models/Idea';
-import { scrapeCompetitor } from '../lib/scraper';
-import { generateFinalizedScript } from '../lib/scriptWriter';
-import { sendApprovalEmail } from '../lib/notifier';
+import { scrapeNewIdeas, getScrapedIdeas } from '../controllers/scrapeController';
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
-  try {
-    await connectDB();
-    const competitors = ['lenskart', 'johnJacobs', 'titanEyeplus'];
-    let newIdeasCount = 0;
+/**
+ * @swagger
+ * /api/scrape:
+ *   post:
+ *     summary: Scrape new ideas
+ *     description: Triggers a scraping job to gather new content ideas from competitors and automatically schedule them.
+ *     responses:
+ *       200:
+ *         description: Successfully scraped new ideas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Server error
+ */
+router.post('/', scrapeNewIdeas);
 
-    const contentTypes: ('Video' | 'Carousel' | 'Post' | 'Story')[] = ['Video', 'Carousel', 'Post', 'Story'];
-    
-    // Get the latest scheduled date to continue the calendar
-    const lastScheduled = await Idea.findOne({ scheduledDate: { $ne: null } }).sort({ scheduledDate: -1 });
-    let nextDate = lastScheduled?.scheduledDate 
-      ? new Date(new Date(lastScheduled.scheduledDate).getTime() + 24 * 60 * 60 * 1000)
-      : new Date(new Date().getTime() + 24 * 60 * 60 * 1000); // Start from tomorrow
-
-    for (const comp of competitors) {
-      const posts = await scrapeCompetitor(comp);
-      for (const post of posts) {
-        const exists = await Idea.findOne({ link: post.link });
-        if (!exists) {
-          const type = contentTypes[Math.floor(Math.random() * contentTypes.length)];
-          const script = generateFinalizedScript(post.title + " " + post.description, type);
-          
-          await Idea.create({
-            ...post,
-            contentType: type,
-            scheduledDate: new Date(nextDate),
-            isDraft: false,
-            script: {
-              hook: script.hook,
-              mid: script.mid,
-              cta: script.cta,
-              caption: script.caption,
-              hashtags: script.hashtags,
-            }
-          });
-          
-          // Increment next date for the next item
-          nextDate.setDate(nextDate.getDate() + 1);
-          newIdeasCount++;
-        }
-      }
-    }
-
-    if (newIdeasCount > 0) {
-      const latestIdeas = await Idea.find({}).sort({ scrapedAt: -1 }).limit(newIdeasCount);
-      await sendApprovalEmail(latestIdeas);
-    }
-
-    return res.json({ message: `Scraping complete. Found ${newIdeasCount} new ideas.` });
-  } catch (error: any) {
-    console.error('API Scrape POST Error:', error);
-    return res.status(500).json({ error: error.message });
-  }
-});
-
-router.get('/', async (req, res) => {
-    try {
-        await connectDB();
-        const ideas = await Idea.find({}).sort({ scrapedAt: -1 });
-        return res.json(ideas);
-    } catch (error: any) {
-        console.error('API Scrape GET Error:', error);
-        return res.status(500).json({ error: error.message });
-    }
-});
+/**
+ * @swagger
+ * /api/scrape:
+ *   get:
+ *     summary: Get all scraped ideas
+ *     description: Retrieves the entire list of scraped ideas sorted by the newest first.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved list of ideas
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *       500:
+ *         description: Server error
+ */
+router.get('/', getScrapedIdeas);
 
 export default router;
