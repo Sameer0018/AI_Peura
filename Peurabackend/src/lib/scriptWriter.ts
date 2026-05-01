@@ -26,7 +26,7 @@ export async function generateFinalizedScript(theme: string, type: 'Video' | 'Ca
     try {
         if (!process.env.GEMINI_API_KEY) throw new Error("No API Key");
 
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
         const prompt = `
             You are a senior D2C fashion brand strategist and creative director for "Peura Opticals".
 

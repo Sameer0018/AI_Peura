@@ -23,6 +23,8 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const [tokens, setTokens] = useState(0);
+  const TOKEN_LIMIT = 500;
 
   // Script editing state
   const [editedScript, setEditedScript] = useState({
@@ -96,13 +98,15 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
       });
 
       const data = await res.json();
-
       if (data.error) throw new Error(data.error);
 
       setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
-    } catch (error) {
+      if (data.totalTokens) {
+        setTokens(prev => prev + data.totalTokens);
+      }
+    } catch (error: any) {
       console.error(error);
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${error.message || 'Something went wrong. Please try again.'}` }]);
     } finally {
       setIsLoading(false);
     }
@@ -188,9 +192,16 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
             <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center">
               <Sparkles size={16} />
             </div>
-            <div>
-              <h3 className="font-bold text-sm">Peura AI Assistant</h3>
-              <p className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider">Online</p>
+            <div className="flex-1 flex justify-between items-center">
+              <div>
+                <h3 className="font-bold text-sm">Peura AI Assistant</h3>
+                <p className="text-[10px] text-green-600 dark:text-green-400 font-bold uppercase tracking-wider">Online</p>
+              </div>
+              <div className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                <p className="text-[10px] font-black text-slate-500 dark:text-slate-400">
+                  TOKENS: <span className={tokens > TOKEN_LIMIT * 0.8 ? 'text-amber-500' : 'text-accent'}>{tokens}</span> / {TOKEN_LIMIT}
+                </p>
+              </div>
             </div>
           </div>
 

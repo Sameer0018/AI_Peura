@@ -34,7 +34,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       return;
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     let formattedHistory = messages.slice(0, -1).map((msg: any) => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
@@ -71,8 +71,12 @@ router.post('/chat', async (req: Request, res: Response) => {
     const result = await chat.sendMessage(parts);
     const response = await result.response;
     const text = response.text();
+    const usage = response.usageMetadata;
 
-    res.json({ response: text });
+    res.json({ 
+      response: text,
+      totalTokens: usage?.totalTokenCount || 0
+    });
   } catch (error: any) {
     console.error("AI Chat Error:", error);
     res.status(500).json({ error: error.message });
@@ -107,7 +111,7 @@ router.post('/generate', async (req: Request, res: Response) => {
       return;
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
     const prompt = `
       You are a senior D2C fashion brand strategist and creative director for "Peura Opticals".
