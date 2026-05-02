@@ -225,6 +225,12 @@ export default function App() {
           >
             <CheckCircle2 size={20} /> CreatedPeura
           </button>
+          <button 
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-accent"
+            onClick={() => router.push('/creative-studio')}
+          >
+            <Sparkles size={20} /> Creative Studio
+          </button>
         </nav>
 
 
