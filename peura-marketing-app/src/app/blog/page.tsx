@@ -14,6 +14,7 @@ interface Blog {
   imageUrl: string;
   author: string;
   createdAt: string;
+  readTime?: string;
 }
 
 export default function BlogListPage() {
