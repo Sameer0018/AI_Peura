@@ -1,4 +1,7 @@
+import { Router, Request, Response } from 'express';
 import BrandIdentity from '../models/BrandIdentity';
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import Idea from '../models/Idea';
 
 const router = Router();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || ""); 

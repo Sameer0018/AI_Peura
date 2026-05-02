@@ -23,6 +23,9 @@ interface Blog {
   imageUrl: string;
   author: string;
   createdAt: string;
+  readTime?: string;
+  publishDate?: string;
+  tags?: string[];
 }
 
 export default function BlogPostPage({ params }: { params: Promise<{ id: string }> }) {
@@ -76,7 +79,7 @@ export default function BlogPostPage({ params }: { params: Promise<{ id: string 
             <div className="max-w-4xl mx-auto px-6 pb-16 lg:pb-24 w-full">
               <div className="flex justify-center gap-4 mb-6">
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-accent font-sans">{blog.category}</span>
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 font-sans">{blog.readTime}</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 font-sans">{blog.readTime || '5 min read'}</span>
               </div>
               <h1 className="text-4xl lg:text-7xl font-black text-white mb-8 leading-[1.1] tracking-tight">{blog.title}</h1>
               <div className="flex flex-wrap items-center justify-center gap-6 text-white/60 text-xs font-sans font-bold">
