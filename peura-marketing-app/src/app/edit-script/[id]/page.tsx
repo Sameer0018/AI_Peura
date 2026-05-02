@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, use, useRef } from 'react';
-import { ArrowLeft, Send, Plus, Sparkles, CheckCircle2, Smartphone, X, Loader2, Save, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Send, Plus, Sparkles, CheckCircle2, Smartphone, X, Loader2, Save, MessageCircle, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeProvider';
 
@@ -165,8 +165,18 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
           </button>
           <div className="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
           <div className="min-w-0">
-            <h1 className="text-base md:text-xl font-black truncate">{idea.title}</h1>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{idea.contentType} Studio</p>
+            <h1 className="text-base md:text-xl font-black truncate leading-tight">{idea.title}</h1>
+            <div className="flex items-center gap-3 mt-0.5">
+              <span className="text-[10px] bg-accent/10 text-accent px-2 py-0.5 rounded-full font-black uppercase tracking-wider border border-accent/20">
+                {idea.contentType} Studio
+              </span>
+              {idea.scheduledDate && (
+                <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold flex items-center gap-1 uppercase tracking-wider">
+                  <Calendar size={10} /> 
+                  Scheduled for {new Date(idea.scheduledDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                </span>
+              )}
+            </div>
           </div>
         </div>
 

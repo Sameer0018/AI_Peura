@@ -23,29 +23,50 @@ export const scrapeNewIdeas = async (req: Request, res: Response) => {
       const posts = await scrapeCompetitor(comp);
       for (const post of posts) {
         const exists = await Idea.findOne({ link: post.link });
-        if (!exists) {
+        
+        if (!exists || !exists.scheduledDate) {
           const type = contentTypes[Math.floor(Math.random() * contentTypes.length)];
-          const script = await generateFinalizedScript(post.title + " " + post.description, type);
+          const script = (exists && exists.script?.hook) 
+            ? exists.script 
+            : await generateFinalizedScript(post.title + " " + (post.description || ""), type);
 
-          
-          await Idea.create({
-            ...post,
-            contentType: type,
-            imageUrl: post.imageUrl,
-            scheduledDate: new Date(nextDate),
-            isDraft: false,
-            tokensUsed: script.tokensUsed || 0,
-            script: {
-              hook: script.hook,
-              storyline: script.storyline,
-              visualDirection: script.visualDirection,
-              productFraming: script.productFraming,
-              cta: script.cta,
-              variations: script.variations,
-              caption: script.caption,
-              hashtags: script.hashtags,
+          if (!exists) {
+            await Idea.create({
+              ...post,
+              contentType: type,
+              imageUrl: post.imageUrl,
+              scheduledDate: new Date(nextDate),
+              isDraft: false,
+              tokensUsed: script.tokensUsed || 0,
+              script: {
+                hook: script.hook,
+                storyline: script.storyline,
+                visualDirection: script.visualDirection,
+                productFraming: script.productFraming,
+                cta: script.cta,
+                variations: script.variations,
+                caption: script.caption,
+                hashtags: script.hashtags,
+              }
+            });
+          } else {
+            // Update existing idea that has no date
+            exists.scheduledDate = new Date(nextDate);
+            if (!exists.script?.hook) {
+              exists.script = {
+                hook: script.hook,
+                storyline: script.storyline,
+                visualDirection: script.visualDirection,
+                productFraming: script.productFraming,
+                cta: script.cta,
+                variations: script.variations,
+                caption: script.caption,
+                hashtags: script.hashtags,
+              };
+              exists.tokensUsed = (exists.tokensUsed || 0) + (script.tokensUsed || 0);
             }
-          });
+            await exists.save();
+          }
           
           // Increment next date for the next item
           nextDate.setDate(nextDate.getDate() + 1);
