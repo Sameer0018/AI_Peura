@@ -31,8 +31,10 @@ export const scrapeNewIdeas = async (req: Request, res: Response) => {
           await Idea.create({
             ...post,
             contentType: type,
+            imageUrl: post.imageUrl,
             scheduledDate: new Date(nextDate),
             isDraft: false,
+            tokensUsed: script.tokensUsed || 0,
             script: {
               hook: script.hook,
               storyline: script.storyline,

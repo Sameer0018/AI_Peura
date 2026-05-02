@@ -101,19 +101,28 @@ export default function IdeaDetailPage({ params }: { params: Promise<{ id: strin
                 </button>
               </div>
             ) : (
-              <div className="text-center p-10 flex flex-col items-center max-w-sm mx-auto">
-                <Video size={64} className="text-slate-300 mb-6" />
-                <h2 className="text-2xl font-black text-slate-800 mb-4">AI Video Generation</h2>
-                <p className="text-slate-500 leading-relaxed font-medium mb-10">
-                  Ready to transform this script into a premium video using Google Veo?
-                </p>
-                <button 
-                  className="bg-accent text-white border-none px-8 py-4 rounded-2xl font-bold cursor-pointer transition-all shadow-lg shadow-accent/20 hover:-translate-y-1 hover:shadow-accent/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full text-lg"
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                >
-                  {isGenerating ? 'Veo is generating...' : 'Generate with Google Veo'}
-                </button>
+              <div className="relative w-full h-full">
+                {idea.imageUrl && (
+                    <img 
+                        src={idea.imageUrl} 
+                        alt="Preview" 
+                        className="absolute inset-0 w-full h-full object-cover opacity-20"
+                    />
+                )}
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-10 text-center bg-white/40 backdrop-blur-sm">
+                    <Video size={64} className="text-slate-400 mb-6" />
+                    <h2 className="text-2xl font-black text-slate-800 mb-4">AI Video Generation</h2>
+                    <p className="text-slate-500 leading-relaxed font-medium mb-10">
+                    Ready to transform this script into a premium video using Google Veo?
+                    </p>
+                    <button 
+                    className="bg-accent text-white border-none px-8 py-4 rounded-2xl font-bold cursor-pointer transition-all shadow-lg shadow-accent/20 hover:-translate-y-1 hover:shadow-accent/40 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none w-full text-lg"
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                    >
+                    {isGenerating ? 'Veo is generating...' : 'Generate with Google Veo'}
+                    </button>
+                </div>
               </div>
             )}
           </div>

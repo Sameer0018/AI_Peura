@@ -13,6 +13,8 @@ export interface IIdea {
   videoUrl?: string;
   generationStatus?: 'none' | 'pending' | 'completed' | 'failed';
   generationCount?: number;
+  tokensUsed?: number;
+  imageUrl?: string;
   script?: {
     hook: string;
     storyline: string;
@@ -46,6 +48,7 @@ const IdeaSchema = new Schema<IIdea>({
     default: 'none' 
   },
   generationCount: { type: Number, default: 0 },
+  tokensUsed: { type: Number, default: 0 },
   script: {
     hook: String,
     storyline: String,
@@ -56,6 +59,7 @@ const IdeaSchema = new Schema<IIdea>({
     caption: String,
     hashtags: [String],
   },
+  imageUrl: { type: String, required: false },
 });
 
 if (models.Idea) {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, use, useRef } from 'react';
-import { ArrowLeft, Send, Plus, Sparkles, CheckCircle2, Smartphone, X, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Send, Plus, Sparkles, CheckCircle2, Smartphone, X, Loader2, Save, MessageCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeProvider';
 
@@ -24,7 +24,6 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
   const fileInputRef = useRef<HTMLInputElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [tokens, setTokens] = useState(0);
-  const TOKEN_LIMIT = 500;
 
   // Script editing state
   const [editedScript, setEditedScript] = useState({
@@ -52,6 +51,7 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
             caption: data.script?.caption || '',
             hashtags: data.script?.hashtags || ''
           });
+          setTokens(data.tokensUsed || 0);
 
           // Initial greeting from AI
           setMessages([{
@@ -93,7 +93,8 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: currentMessages.map(m => ({ role: m.role, content: m.content })),
-          imageBase64: newUserMsg.image
+          imageBase64: newUserMsg.image,
+          ideaId: id
         })
       });
 
@@ -141,6 +142,13 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
     }
   };
 
+  const handleWhatsAppShare = () => {
+    const phoneNumber = "8770864756";
+    const text = `*${idea.title}*\n\n${editedScript.caption}\n\n${editedScript.hashtags}\n\nPreview Image: ${idea.imageUrl || ''}`;
+    const url = `https://wa.me/91${phoneNumber}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
   if (!idea) return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950 text-xl font-bold text-accent">
       Loading Studio...
@@ -172,6 +180,15 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
             <span className="hidden sm:inline">{showInstagramLook ? 'Hide IG Look' : 'Instagram Look'}</span>
             <span className="sm:hidden">{showInstagramLook ? 'Hide' : 'IG Look'}</span>
           </button>
+          {showInstagramLook && (
+            <button
+              onClick={handleWhatsAppShare}
+              className="bg-[#25D366] text-white px-4 md:px-6 py-2 md:py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg shadow-green-500/20 hover:-translate-y-0.5 transition-all text-sm"
+            >
+              <MessageCircle size={18} />
+              <span className="hidden sm:inline">WhatsApp</span>
+            </button>
+          )}
           <button
             onClick={handleFinalize}
             disabled={isSaving}
@@ -199,7 +216,7 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
               </div>
               <div className="bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                 <p className="text-[10px] font-black text-slate-500 dark:text-slate-400">
-                  TOKENS: <span className={tokens > TOKEN_LIMIT * 0.8 ? 'text-amber-500' : 'text-accent'}>{tokens}</span> / {TOKEN_LIMIT}
+                  TOKENS USED: <span className="text-accent">{tokens}</span>
                 </p>
               </div>
             </div>
@@ -282,8 +299,8 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
               {/* IG Header */}
               <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-black shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80&w=100&h=100" alt="Avatar" className="w-full h-full object-cover" />
+                  <div className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-black text-[10px]">
+                    PE
                   </div>
                   <div>
                     <p className="text-sm font-bold leading-none dark:text-white">peuraopticals</p>
@@ -300,7 +317,7 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
               {/* IG Media Area */}
               <div className="flex-1 bg-slate-900 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80&w=800&h=1200"
+                  src={idea.imageUrl || `https://images.unsplash.com/photo-1572635196237-14b3f281503f?auto=format&fit=crop&q=80&w=800&h=1200`}
                   alt="Post"
                   className="w-full h-full object-cover"
                 />

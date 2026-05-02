@@ -57,6 +57,7 @@ export async function generateFinalizedScript(theme: string, type: 'Video' | 'Ca
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
+        const usage = response.usageMetadata;
         const cleanJson = text.replace(/```json/g, "").replace(/```/g, "").trim();
         const script = JSON.parse(cleanJson);
 
@@ -69,6 +70,7 @@ export async function generateFinalizedScript(theme: string, type: 'Video' | 'Ca
 
         return {
             templateName: "Strategic AI",
+            tokensUsed: usage?.totalTokenCount || 0,
             ...script
         };
     } catch (error) {

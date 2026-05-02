@@ -1,33 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import Idea from '../models/Idea';
 
 const router = Router();
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || ""); // Note: If v1 still fails, we might need a specific SDK config or a different model name.
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || ""); 
 
-/**
- * @swagger
- * /api/ai/chat:
- *   post:
- *     summary: AI Chat with Gemini
- *     tags: [AI]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               messages:
- *                 type: array
- *               imageBase64:
- *                 type: string
- *     responses:
- *       200:
- *         description: AI Response
- */
 router.post('/chat', async (req: Request, res: Response) => {
   try {
-    const { messages, imageBase64 } = req.body;
+    const { messages, imageBase64, ideaId } = req.body;
 
     if (!messages || !Array.isArray(messages)) {
       res.status(400).json({ error: "Messages array is required" });
@@ -72,10 +52,15 @@ router.post('/chat', async (req: Request, res: Response) => {
     const response = await result.response;
     const text = response.text();
     const usage = response.usageMetadata;
+    const tokens = usage?.totalTokenCount || 0;
+
+    if (ideaId) {
+        await Idea.findByIdAndUpdate(ideaId, { $inc: { tokensUsed: tokens } });
+    }
 
     res.json({ 
       response: text,
-      totalTokens: usage?.totalTokenCount || 0
+      totalTokens: tokens
     });
   } catch (error: any) {
     console.error("AI Chat Error:", error);
