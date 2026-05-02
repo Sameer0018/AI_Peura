@@ -18,7 +18,6 @@ const D2C_STRATEGY: Record<number, { format: string, color: string, tip: string 
 
 export default function App() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState('calendar');
   const [ideas, setIdeas] = useState<any[]>([]);
   const [selectedIdea, setSelectedIdea] = useState<any | null>(null);
   const [notification, setNotification] = useState<{ message: string, type: 'success' | 'error', action?: { label: string, tab: string } } | null>(null);
@@ -175,7 +174,7 @@ export default function App() {
       <main className="flex-1 p-5 lg:p-10 overflow-y-auto mt-16 lg:mt-0">
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
             <div>
-                <h1 className="text-2xl lg:text-3xl font-black tracking-tight dark:text-white">Content Engine</h1>
+                <h1 className="text-2xl lg:text-3xl font-black tracking-tight dark:text-white">Content <span className="text-accent">Engine</span></h1>
                 <p className="text-slate-500 dark:text-slate-400 mt-1 font-medium text-sm lg:text-base">AI-powered marketing automation for D2C growth.</p>
             </div>
             <div className="flex gap-3 w-full md:w-auto">
@@ -187,16 +186,11 @@ export default function App() {
                     <RefreshCw size={18} className={isScraping ? 'animate-spin' : ''} />
                     {isScraping ? 'Scraping...' : 'Scrape New Ideas'}
                 </button>
-                <button className="flex-1 md:flex-none bg-accent text-white px-7 py-3 rounded-xl font-bold shadow-lg shadow-accent/20 hover:-translate-y-0.5 hover:shadow-accent/30 transition-all">
-                    + New Campaign
-                </button>
             </div>
         </header>
 
         <div className="view-container">
-            {activeTab === 'calendar' && <CalendarView ideas={ideas} onSelectIdea={setSelectedIdea} />}
-            {activeTab === 'dashboard' && <DashboardView ideas={ideas} ideasCount={ideas.length} />}
-            {activeTab === 'created' && <CreatedPeuraView ideas={ideas} onSelectIdea={setSelectedIdea} />}
+            <CalendarView ideas={ideas} onSelectIdea={setSelectedIdea} />
         </div>
 
         {/* Global Notification */}
@@ -207,7 +201,12 @@ export default function App() {
                     <p className="font-bold text-sm">{notification.message}</p>
                     {notification.action && (
                         <button 
-                            onClick={() => { setActiveTab(notification.action!.tab); setNotification(null); }}
+                            onClick={() => { 
+                                const path = notification.action!.tab === 'created' ? '/created' : 
+                                             notification.action!.tab === 'dashboard' ? '/dashboard' : '/';
+                                router.push(path); 
+                                setNotification(null); 
+                            }}
                             className="text-[10px] font-black uppercase tracking-widest text-accent mt-1 hover:underline text-left"
                         >
                             {notification.action.label} →
@@ -542,196 +541,6 @@ function CalendarView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (id
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
-
-function DashboardView({ ideas, ideasCount }: { ideas: any[], ideasCount: number }) {
-  // Simple gap analysis: check the next 7 days for missing recommended formats
-  const next7Days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() + i);
-    return d.toISOString().split('T')[0];
-  });
-
-  const gaps = next7Days.filter(dateStr => {
-    const dayOfWeek = new Date(dateStr).getDay();
-    const recommended = D2C_STRATEGY[dayOfWeek].format;
-    const hasContent = ideas.some(idea => idea.scheduledDate && idea.scheduledDate.startsWith(dateStr) && idea.contentType === recommended);
-    return !hasContent;
-  });
-
-  return (
-    <div className="space-y-10">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-          <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[9px] tracking-widest mb-3">Content Planned</h4>
-          <div className="text-4xl font-black text-slate-800 dark:text-white">{ideasCount}</div>
-        </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-          <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[9px] tracking-widest mb-3">Potential Reach</h4>
-          <div className="text-4xl font-black text-slate-800 dark:text-white">
-            {(ideasCount * 2500).toLocaleString()}+
-          </div>
-        </div>
-        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-          <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[9px] tracking-widest mb-3">Est. ROI Impact</h4>
-          <div className="text-4xl font-black text-emerald-500">
-            12.4x
-          </div>
-        </div>
-        <div className="bg-gradient-to-br from-accent to-amber-500 rounded-[32px] p-8 text-center shadow-lg shadow-accent/20 text-white">
-          <h4 className="text-white/70 font-bold uppercase text-[9px] tracking-widest mb-3">Launch Readiness</h4>
-          <div className="text-4xl font-black">84%</div>
-        </div>
-      </div>
-
-      <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 p-8 lg:p-12 shadow-sm">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-          <div>
-            <h3 className="text-2xl font-black flex items-center gap-3">
-              <Sparkles className="text-accent" />
-              Content Gap Analysis
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">AI-driven recommendations for your next 7 days.</p>
-          </div>
-          <div className="bg-amber-50 dark:bg-amber-900/20 text-accent px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900/30">
-            {gaps.length} Actionable Gaps
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {next7Days.map((dateStr, i) => {
-            const date = new Date(dateStr);
-            const dayOfWeek = date.getDay();
-            const recommendation = D2C_STRATEGY[dayOfWeek];
-            const hasContent = ideas.some(idea => idea.scheduledDate && idea.scheduledDate.startsWith(dateStr) && idea.contentType === recommendation.format);
-
-            return (
-              <div key={i} className={`p-6 rounded-3xl border transition-all ${hasContent ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 opacity-60' : 'bg-white dark:bg-slate-900 border-accent/20 shadow-lg shadow-accent/5'}`}>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
-                    {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
-                  </div>
-                  {hasContent ? (
-                    <CheckCircle2 size={16} className="text-green-500" />
-                  ) : (
-                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                  )}
-                </div>
-                <h4 className="text-sm font-black mb-1">{recommendation.format} Recommended</h4>
-                <p className="text-[10px] text-slate-500 font-bold leading-tight mb-4">{recommendation.tip}</p>
-                {!hasContent && (
-                  <button className="w-full py-2 bg-accent/10 text-accent rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-white transition-all">
-                    Fill Gap
-                  </button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CreatedPeuraView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (idea: any) => void }) {
-  const [activeSubTab, setActiveSubTab] = useState<'all' | 'scripts' | 'blogs' | 'visuals'>('all');
-  const [blogs, setBlogs] = useState<any[]>([]);
-  const [prompts, setPrompts] = useState<any[]>([]);
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://peurabackend.onrender.com';
-
-  useEffect(() => {
-    fetch(`${API_URL}/api/blog`)
-      .then(res => res.json())
-      .then(data => setBlogs(data))
-      .catch(e => console.error(e));
-
-    fetch(`${API_URL}/api/visual-prompt`)
-      .then(res => res.json())
-      .then(data => setPrompts(data))
-      .catch(e => console.error(e));
-  }, []);
-
-  const createdIdeas = ideas.filter(i => i.generationStatus === 'completed' || (i.script && (i.script.hook || i.script.storyline)));
-  
-  const allItems = [
-    ...createdIdeas.map(i => ({ ...i, type: 'script' })),
-    ...blogs.map(b => ({ ...b, type: 'blog', contentType: 'Blog', generationStatus: 'completed' })),
-    ...prompts.map(p => ({ ...p, type: 'visual', contentType: 'Prompt', generationStatus: 'completed' }))
-  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-  const filteredItems = activeSubTab === 'all' ? allItems : 
-                        activeSubTab === 'scripts' ? allItems.filter(i => i.type === 'script') : 
-                        activeSubTab === 'blogs' ? allItems.filter(i => i.type === 'blog') :
-                        allItems.filter(i => i.type === 'visual');
-
-  if (allItems.length === 0) {
-    return (
-      <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
-        <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={40} className="text-slate-200 dark:text-slate-700" />
-        </div>
-        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Your content library is empty</h3>
-        <p className="text-slate-500 dark:text-slate-400 mt-2">Start generating scripts or publishing blogs to see them here.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-10">
-      <div className="flex gap-4 mb-8">
-        {['all', 'scripts', 'blogs', 'visuals'].map((tab) => (
-          <button 
-            key={tab}
-            onClick={() => setActiveSubTab(tab as any)}
-            className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeSubTab === tab ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredItems.map((item: any, idx: number) => (
-          <div 
-            key={idx} 
-            className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col h-full"
-            onClick={() => {
-              if (item.type === 'script') onSelectIdea(item);
-              else if (item.type === 'blog') window.location.href = `/blog/${item._id}`;
-              else {
-                navigator.clipboard.writeText(item.prompt);
-                alert('Prompt copied to clipboard!');
-              }
-            }}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-2">
-                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    item.contentType === 'Video' ? 'bg-rose-50 text-rose-600' :
-                    item.contentType === 'Carousel' ? 'bg-violet-50 text-violet-600' :
-                    item.contentType === 'Blog' ? 'bg-emerald-50 text-emerald-600' :
-                    item.contentType === 'Prompt' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
-                    item.contentType === 'Post' ? 'bg-sky-50 text-sky-600' : 'bg-slate-50 text-slate-600'
-                }`}>
-                    {item.contentType === 'Prompt' ? `${item.type.toUpperCase()}` : item.contentType}
-                </div>
-              </div>
-              <div className="text-slate-300 group-hover:text-accent transition-colors">
-                {item.type === 'script' ? <Play size={18} /> : item.type === 'blog' ? <Sparkles size={18} /> : <Wand2 size={18} />}
-              </div>
-            </div>
-            <h4 className="font-bold text-slate-800 dark:text-slate-100 line-clamp-2 mb-3 leading-tight flex-1">{item.title}</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4">
-              {item.type === 'script' ? item.script?.hook : item.type === 'blog' ? item.excerpt : item.prompt}
-            </p>
-            <div className="flex items-center gap-2 text-[10px] font-bold text-green-600 bg-green-50 w-fit px-3 py-1.5 rounded-lg">
-              <CheckCircle2 size={12} /> {item.type === 'script' ? 'AI Script Ready' : item.type === 'blog' ? 'Published' : 'Prompt Saved'}
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   );

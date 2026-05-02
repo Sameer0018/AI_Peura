@@ -35,6 +35,7 @@ import blogRoutes from './routes/blog';
 import actionPlanRoutes from './routes/actionPlan';
 import faqRoutes from './routes/faq';
 import visualPromptRoutes from './routes/visualPrompt';
+import brandRoutes from './routes/brand';
 
 app.use('/api/idea', ideaRoutes);
 app.use('/api/scrape', scrapeRoutes);
@@ -44,6 +45,7 @@ app.use('/api/blog', blogRoutes);
 app.use('/api/action-plan', actionPlanRoutes);
 app.use('/api/faq', faqRoutes);
 app.use('/api/visual-prompt', visualPromptRoutes);
+app.use('/api/brand', brandRoutes);
 
 
 // Basic health check

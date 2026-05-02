@@ -4,11 +4,14 @@ import Idea from '../models/Idea';
 import { scrapeCompetitor } from '../lib/scraper';
 import { generateFinalizedScript } from '../lib/scriptWriter';
 import { sendApprovalEmail } from '../lib/notifier';
+import BrandIdentity from '../models/BrandIdentity';
 
 export const scrapeNewIdeas = async (req: Request, res: Response) => {
   try {
     await connectDB();
-    const competitors = ['lenskart', 'johnJacobs', 'titanEyeplus'];
+    const brandIdentity = await BrandIdentity.findOne();
+    const { competitor } = req.body;
+    const competitors = competitor ? [competitor] : ['lenskart', 'johnJacobs', 'titanEyeplus'];
     let newIdeasCount = 0;
 
     const contentTypes: ('Video' | 'Carousel' | 'Post' | 'Story')[] = ['Video', 'Carousel', 'Post', 'Story'];
@@ -28,7 +31,7 @@ export const scrapeNewIdeas = async (req: Request, res: Response) => {
           const type = contentTypes[Math.floor(Math.random() * contentTypes.length)];
           const script = (exists && exists.script?.hook) 
             ? exists.script 
-            : await generateFinalizedScript(post.title + " " + (post.description || ""), type);
+            : await generateFinalizedScript(post.title + " " + (post.description || ""), type, brandIdentity);
 
           if (!exists) {
             await Idea.create({

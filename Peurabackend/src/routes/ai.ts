@@ -1,6 +1,4 @@
-import { Router, Request, Response } from 'express';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import Idea from '../models/Idea';
+import BrandIdentity from '../models/BrandIdentity';
 
 const router = Router();
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || ""); 
@@ -8,6 +6,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 router.post('/chat', async (req: Request, res: Response) => {
   try {
     const { messages, imageBase64, ideaId } = req.body;
+    const brandIdentity = await BrandIdentity.findOne();
 
     if (!messages || !Array.isArray(messages)) {
       res.status(400).json({ error: "Messages array is required" });
@@ -15,6 +14,15 @@ router.post('/chat', async (req: Request, res: Response) => {
     }
 
     const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+    const systemContext = brandIdentity ? `
+      You are the AI Creative Director for ${brandIdentity.brandName}.
+      Brand DNA:
+      - Tone: ${brandIdentity.tone}
+      - Target Audience: ${brandIdentity.targetAudience}
+      - Core Values: ${brandIdentity.coreValues.join(", ")}
+      - Product UVP: ${brandIdentity.productUVP}
+    ` : "You are an expert Creative Director for Peura Opticals, a premium D2C eyewear brand.";
 
     let formattedHistory = messages.slice(0, -1).map((msg: any) => ({
       role: msg.role === 'assistant' ? 'model' : 'user',
@@ -28,7 +36,7 @@ router.post('/chat', async (req: Request, res: Response) => {
     const chat = model.startChat({
       history: formattedHistory,
       systemInstruction: {
-        parts: [{ text: "You are an expert Creative Director and AI Copywriter for Peura Opticals, a premium D2C eyewear brand. You write highly engaging, strategic scripts, captions, and concepts for Instagram Reels and posts. Maintain a sophisticated, fashion-forward, and persuasive tone. Output ONLY the rewritten text, without conversational filler unless the user asks a general question." }],
+        parts: [{ text: `${systemContext} Your goal is to write high-engaging, fashion-forward content. Output ONLY the response without conversational filler unless necessary.` }],
         role: "system"
       }
     });
@@ -68,6 +76,32 @@ router.post('/chat', async (req: Request, res: Response) => {
   }
 });
 
+// Daily Strategy Recommendation
+router.get('/strategy', async (req: Request, res: Response) => {
+  try {
+    const brandIdentity = await BrandIdentity.findOne();
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+
+    const systemContext = brandIdentity ? `
+      Brand: ${brandIdentity.brandName}
+      Tone: ${brandIdentity.tone}
+      Audience: ${brandIdentity.targetAudience}
+    ` : "Brand: Peura Opticals";
+
+    const prompt = `
+      As a Creative Director, give a ONE-SENTENCE strategic content recommendation for TODAY (${new Date().toLocaleDateString('en-US', { weekday: 'long' })}).
+      Focus on ${systemContext}.
+      Be specific (e.g. "Post a behind-the-scenes reel of the quality control process to build trust").
+    `;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    res.json({ strategy: text.trim() });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 /**
  * @swagger
  * /api/ai/generate:
@@ -98,13 +132,25 @@ router.post('/generate', async (req: Request, res: Response) => {
 
     const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
+    const brandIdentity = await BrandIdentity.findOne();
+
+    const identityContext = brandIdentity ? `
+      Brand DNA:
+      - Tone: ${brandIdentity.tone}
+      - Target Audience: ${brandIdentity.targetAudience}
+      - Product UVP: ${brandIdentity.productUVP}
+      - Core Values: ${brandIdentity.coreValues.join(", ")}
+    ` : `
+      - Brand Name: Peura Opticals
+      - Category: Premium Eyewear / D2C Fashion
+      - Target Audience: Gen Z and Millennials, fashion-forward, urban, value-conscious but style-driven.
+    `;
+
     const prompt = `
       You are a senior D2C fashion brand strategist and creative director for "Peura Opticals".
 
       Context:
-      - Brand Name: Peura Opticals
-      - Category: Premium Eyewear / D2C Fashion
-      - Target Audience: Gen Z and Millennials, fashion-forward, urban, value-conscious but style-driven.
+      ${identityContext}
       - Platform: ${idea.contentType === 'Video' ? 'Instagram Reels / TikTok' : 'Instagram Feed / Meta Ads'}
       - Campaign Idea: ${idea.title}
       - Content Format: ${idea.contentType}

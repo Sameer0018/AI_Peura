@@ -22,18 +22,30 @@ export const TEMPLATES = [
     }
 ];
 
-export async function generateFinalizedScript(theme: string, type: 'Video' | 'Carousel' | 'Post' | 'Story' = 'Video') {
+export async function generateFinalizedScript(theme: string, type: 'Video' | 'Carousel' | 'Post' | 'Story' = 'Video', brandIdentity?: any) {
     try {
         if (!process.env.GEMINI_API_KEY) throw new Error("No API Key");
 
         const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
+        
+        const identityContext = brandIdentity ? `
+            Brand DNA:
+            - Tone: ${brandIdentity.tone}
+            - Target Audience: ${brandIdentity.targetAudience}
+            - Product UVP: ${brandIdentity.productUVP}
+            - Core Values: ${brandIdentity.coreValues.join(", ")}
+            - Brand Hashtags: ${brandIdentity.hashtags.join(", ")}
+        ` : `
+            - Brand Name: Peura Opticals
+            - Category: Premium Eyewear / D2C Fashion
+            - Target Audience: Gen Z and Millennials, fashion-forward, urban, value-conscious but style-driven.
+        `;
+
         const prompt = `
             You are a senior D2C fashion brand strategist and creative director for "Peura Opticals".
 
             Context:
-            - Brand Name: Peura Opticals
-            - Category: Premium Eyewear / D2C Fashion
-            - Target Audience: Gen Z and Millennials, fashion-forward, urban, value-conscious but style-driven.
+            ${identityContext}
             - Platform: ${type === 'Video' ? 'Instagram Reels / TikTok' : 'Instagram Feed / Meta Ads'}
             - Campaign Theme: ${theme}
             - Content Format: ${type}

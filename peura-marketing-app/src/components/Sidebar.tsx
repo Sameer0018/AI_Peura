@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, usePathname } from 'next/navigation';
-import { Calendar, LayoutDashboard, Play, Settings, Sparkles, CheckCircle2, Menu, X, Rocket, Target, Layers, Plus, HelpCircle } from 'lucide-react';
+import { Calendar, LayoutDashboard, Play, Settings, Sparkles, CheckCircle2, Menu, X, Rocket, Target, Layers, Plus, HelpCircle, Fingerprint } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeProvider';
 
 interface SidebarProps {
@@ -14,10 +14,12 @@ export default function Sidebar({ isOpen, setIsOpen }: SidebarProps) {
   const pathname = usePathname();
 
   const navItems = [
+    { label: 'Growth Dashboard', icon: LayoutDashboard, path: '/dashboard', id: 'dashboard' },
     { label: 'Smart Calendar', icon: Calendar, path: '/', id: 'calendar' },
     { label: 'The Peura Journal', icon: Layers, path: '/blog', id: 'blog' },
     { label: 'Create Blog', icon: Plus, path: '/blog/create', id: 'blog-create' },
     { label: '30-Day Launch', icon: Rocket, path: '/action-plan', id: 'action-plan', badge: 'New' },
+    { label: 'Brand Identity', icon: Fingerprint, path: '/brand', id: 'brand' },
     { label: 'Brand FAQs', icon: HelpCircle, path: '/faqs', id: 'faqs' },
     { label: 'CreatedPeura', icon: CheckCircle2, path: '/created', id: 'created' },
     { label: 'Creative Studio', icon: Sparkles, path: '/creative-studio', id: 'studio' },

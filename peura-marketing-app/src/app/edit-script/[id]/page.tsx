@@ -416,6 +416,7 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
           )}
         </div>
       </div>
+      </div>
     </div>
   );
 }
