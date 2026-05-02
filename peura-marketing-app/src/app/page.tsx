@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Calendar, LayoutDashboard, Play, Settings, RefreshCw, Sparkles, CheckCircle2, Menu, X, MessageCircle } from 'lucide-react';
 import { ThemeToggle } from '@/components/ThemeProvider';
+import Sidebar from '@/components/Sidebar';
 
 const D2C_STRATEGY: Record<number, { format: string, color: string, tip: string }> = {
   0: { format: 'Story', color: 'bg-amber-100 text-amber-800 border-amber-200', tip: 'Sunday: Casual & Behind the scenes' },
@@ -168,82 +169,7 @@ export default function App() {
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans relative overflow-x-hidden transition-colors duration-300">
-      {/* Mobile Header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 flex items-center justify-between z-40">
-        <div className="text-xl font-black uppercase tracking-wider text-black dark:text-white">
-          Peura <span className="text-accent">AI</span>
-        </div>
-        <button 
-          onClick={() => setIsSidebarOpen(true)}
-          className="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-600 dark:text-slate-300"
-        >
-          <Menu size={24} />
-        </button>
-      </header>
-
-      {/* Sidebar Overlay (Mobile) */}
-      {isSidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 lg:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-8 shadow-2xl lg:shadow-sm flex flex-col transition-transform duration-300 lg:translate-x-0 lg:static
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
-        <div className="flex justify-between items-center mb-12">
-          <div className="text-2xl font-black uppercase tracking-wider text-black dark:text-white">
-            Peura <span className="text-accent">AI</span>
-          </div>
-          <button 
-            onClick={() => setIsSidebarOpen(false)}
-            className="lg:hidden p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-400"
-          >
-            <X size={20} />
-          </button>
-        </div>
-        
-        <nav className="flex-1 space-y-2">
-          <button 
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'calendar' ? 'bg-amber-50 dark:bg-amber-900/20 text-accent' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-accent'}`}
-            onClick={() => { setActiveTab('calendar'); setIsSidebarOpen(false); }}
-          >
-            <Calendar size={20} /> Smart Calendar
-          </button>
-          <button 
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'dashboard' ? 'bg-amber-50 dark:bg-amber-900/20 text-accent' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-accent'}`}
-            onClick={() => { setActiveTab('dashboard'); setIsSidebarOpen(false); }}
-          >
-            <LayoutDashboard size={20} /> Dashboard
-          </button>
-          <button 
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${activeTab === 'created' ? 'bg-amber-50 dark:bg-amber-900/20 text-accent' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-accent'}`}
-            onClick={() => { setActiveTab('created'); setIsSidebarOpen(false); }}
-          >
-            <CheckCircle2 size={20} /> CreatedPeura
-          </button>
-          <button 
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-accent"
-            onClick={() => router.push('/creative-studio')}
-          >
-            <Sparkles size={20} /> Creative Studio
-          </button>
-        </nav>
-
-
-        <div className="mt-auto space-y-2">
-            <div className="px-4 py-3 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Theme</span>
-              <ThemeToggle />
-            </div>
-            <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium">
-                <Settings size={20} /> Settings
-            </button>
-        </div>
-      </aside>
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
       {/* Main Content */}
       <main className="flex-1 p-5 lg:p-10 overflow-y-auto mt-16 lg:mt-0">
@@ -269,7 +195,7 @@ export default function App() {
 
         <div className="view-container">
             {activeTab === 'calendar' && <CalendarView ideas={ideas} onSelectIdea={setSelectedIdea} />}
-            {activeTab === 'dashboard' && <DashboardView ideasCount={ideas.length} />}
+            {activeTab === 'dashboard' && <DashboardView ideas={ideas} ideasCount={ideas.length} />}
             {activeTab === 'created' && <CreatedPeuraView ideas={ideas} onSelectIdea={setSelectedIdea} />}
         </div>
 
@@ -621,91 +547,192 @@ function CalendarView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (id
   );
 }
 
-function DashboardView({ ideasCount }: { ideasCount: number }) {
+function DashboardView({ ideas, ideasCount }: { ideas: any[], ideasCount: number }) {
+  // Simple gap analysis: check the next 7 days for missing recommended formats
+  const next7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    return d.toISOString().split('T')[0];
+  });
+
+  const gaps = next7Days.filter(dateStr => {
+    const dayOfWeek = new Date(dateStr).getDay();
+    const recommended = D2C_STRATEGY[dayOfWeek].format;
+    const hasContent = ideas.some(idea => idea.scheduledDate && idea.scheduledDate.startsWith(dateStr) && idea.contentType === recommended);
+    return !hasContent;
+  });
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-        <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider mb-3">Content Planned</h4>
-        <div className="text-5xl font-black text-slate-800 dark:text-white">{ideasCount}</div>
+    <div className="space-y-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
+          <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[9px] tracking-widest mb-3">Content Planned</h4>
+          <div className="text-4xl font-black text-slate-800 dark:text-white">{ideasCount}</div>
+        </div>
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
+          <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[9px] tracking-widest mb-3">Potential Reach</h4>
+          <div className="text-4xl font-black text-slate-800 dark:text-white">
+            {(ideasCount * 2500).toLocaleString()}+
+          </div>
+        </div>
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[32px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
+          <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[9px] tracking-widest mb-3">Est. ROI Impact</h4>
+          <div className="text-4xl font-black text-emerald-500">
+            12.4x
+          </div>
+        </div>
+        <div className="bg-gradient-to-br from-accent to-amber-500 rounded-[32px] p-8 text-center shadow-lg shadow-accent/20 text-white">
+          <h4 className="text-white/70 font-bold uppercase text-[9px] tracking-widest mb-3">Launch Readiness</h4>
+          <div className="text-4xl font-black">84%</div>
+        </div>
       </div>
-      <div className="bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border border-slate-100 dark:border-slate-800 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-        <h4 className="text-slate-500 dark:text-slate-400 font-bold uppercase text-xs tracking-wider mb-3">Videos Ready</h4>
-        <div className="text-5xl font-black text-slate-800 dark:text-white">12</div>
-      </div>
-      <div className="bg-white/70 backdrop-blur-md border border-slate-100 rounded-[24px] p-8 text-center shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-        <h4 className="text-slate-500 font-bold uppercase text-xs tracking-wider mb-3">Production Goal</h4>
-        <div className="text-5xl font-black text-slate-800">100%</div>
+
+      <div className="bg-white dark:bg-slate-900 rounded-[40px] border border-slate-200 dark:border-slate-800 p-8 lg:p-12 shadow-sm">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
+          <div>
+            <h3 className="text-2xl font-black flex items-center gap-3">
+              <Sparkles className="text-accent" />
+              Content Gap Analysis
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 font-medium text-sm mt-1">AI-driven recommendations for your next 7 days.</p>
+          </div>
+          <div className="bg-amber-50 dark:bg-amber-900/20 text-accent px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest border border-amber-100 dark:border-amber-900/30">
+            {gaps.length} Actionable Gaps
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {next7Days.map((dateStr, i) => {
+            const date = new Date(dateStr);
+            const dayOfWeek = date.getDay();
+            const recommendation = D2C_STRATEGY[dayOfWeek];
+            const hasContent = ideas.some(idea => idea.scheduledDate && idea.scheduledDate.startsWith(dateStr) && idea.contentType === recommendation.format);
+
+            return (
+              <div key={i} className={`p-6 rounded-3xl border transition-all ${hasContent ? 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 opacity-60' : 'bg-white dark:bg-slate-900 border-accent/20 shadow-lg shadow-accent/5'}`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div className="text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                    {date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                  </div>
+                  {hasContent ? (
+                    <CheckCircle2 size={16} className="text-green-500" />
+                  ) : (
+                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                  )}
+                </div>
+                <h4 className="text-sm font-black mb-1">{recommendation.format} Recommended</h4>
+                <p className="text-[10px] text-slate-500 font-bold leading-tight mb-4">{recommendation.tip}</p>
+                {!hasContent && (
+                  <button className="w-full py-2 bg-accent/10 text-accent rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-accent hover:text-white transition-all">
+                    Fill Gap
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
+
 function CreatedPeuraView({ ideas, onSelectIdea }: { ideas: any[], onSelectIdea: (idea: any) => void }) {
+  const [activeSubTab, setActiveSubTab] = useState<'all' | 'scripts' | 'blogs' | 'visuals'>('all');
+  const [blogs, setBlogs] = useState<any[]>([]);
+  const [prompts, setPrompts] = useState<any[]>([]);
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://peurabackend.onrender.com';
+
+  useEffect(() => {
+    fetch(`${API_URL}/api/blog`)
+      .then(res => res.json())
+      .then(data => setBlogs(data))
+      .catch(e => console.error(e));
+
+    fetch(`${API_URL}/api/visual-prompt`)
+      .then(res => res.json())
+      .then(data => setPrompts(data))
+      .catch(e => console.error(e));
+  }, []);
+
   const createdIdeas = ideas.filter(i => i.generationStatus === 'completed' || (i.script && (i.script.hook || i.script.storyline)));
   
-  // Group by date
-  const grouped = createdIdeas.reduce((acc: any, idea) => {
-    const date = idea.scheduledDate ? new Date(idea.scheduledDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Unscheduled';
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(idea);
-    return acc;
-  }, {});
+  const allItems = [
+    ...createdIdeas.map(i => ({ ...i, type: 'script' })),
+    ...blogs.map(b => ({ ...b, type: 'blog', contentType: 'Blog', generationStatus: 'completed' })),
+    ...prompts.map(p => ({ ...p, type: 'visual', contentType: 'Prompt', generationStatus: 'completed' }))
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-  if (createdIdeas.length === 0) {
+  const filteredItems = activeSubTab === 'all' ? allItems : 
+                        activeSubTab === 'scripts' ? allItems.filter(i => i.type === 'script') : 
+                        activeSubTab === 'blogs' ? allItems.filter(i => i.type === 'blog') :
+                        allItems.filter(i => i.type === 'visual');
+
+  if (allItems.length === 0) {
     return (
-      <div className="text-center py-20 bg-white rounded-[32px] border border-slate-100 shadow-sm">
-        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-          <CheckCircle2 size={40} className="text-slate-200" />
+      <div className="text-center py-20 bg-white dark:bg-slate-900 rounded-[32px] border border-slate-100 dark:border-slate-800 shadow-sm">
+        <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 size={40} className="text-slate-200 dark:text-slate-700" />
         </div>
-        <h3 className="text-xl font-bold text-slate-800">No content created yet</h3>
-        <p className="text-slate-500 mt-2">Generate your first Peura script from the Smart Calendar.</p>
+        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Your content library is empty</h3>
+        <p className="text-slate-500 dark:text-slate-400 mt-2">Start generating scripts or publishing blogs to see them here.</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-10">
-      {Object.entries(grouped).map(([date, items]: [string, any]) => (
-        <div key={date}>
-          <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-accent mb-6 flex items-center gap-4">
-            {date}
-            <div className="h-px bg-slate-100 flex-1"></div>
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items.map((idea: any, idx: number) => (
-              <div 
-                key={idx} 
-                className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group"
-                onClick={() => onSelectIdea(idea)}
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                        idea.contentType === 'Video' ? 'bg-rose-50 text-rose-600' :
-                        idea.contentType === 'Carousel' ? 'bg-violet-50 text-violet-600' :
-                        idea.contentType === 'Post' ? 'bg-sky-50 text-sky-600' : 'bg-amber-50 text-amber-600'
-                    }`}>
-                        {idea.contentType}
-                    </div>
-                    {idea.generationCount > 0 && (
-                        <div className="bg-slate-100 text-slate-500 text-[9px] font-bold px-2 py-1 rounded-md">
-                            #{idea.generationCount}
-                        </div>
-                    )}
-                  </div>
-                  <div className="text-slate-300 group-hover:text-accent transition-colors">
-                    <Play size={18} />
-                  </div>
-                </div>
-                <h4 className="font-bold text-slate-800 dark:text-slate-100 line-clamp-2 mb-3 leading-tight">{idea.title}</h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4">{idea.script?.hook}</p>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-green-600 bg-green-50 w-fit px-3 py-1.5 rounded-lg">
-                  <CheckCircle2 size={12} /> AI Script Ready
+      <div className="flex gap-4 mb-8">
+        {['all', 'scripts', 'blogs', 'visuals'].map((tab) => (
+          <button 
+            key={tab}
+            onClick={() => setActiveSubTab(tab as any)}
+            className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeSubTab === tab ? 'bg-accent text-white shadow-lg shadow-accent/20' : 'bg-white dark:bg-slate-900 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredItems.map((item: any, idx: number) => (
+          <div 
+            key={idx} 
+            className="bg-white dark:bg-slate-900 p-6 rounded-[28px] border border-slate-100 dark:border-slate-800 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group flex flex-col h-full"
+            onClick={() => {
+              if (item.type === 'script') onSelectIdea(item);
+              else if (item.type === 'blog') window.location.href = `/blog/${item._id}`;
+              else {
+                navigator.clipboard.writeText(item.prompt);
+                alert('Prompt copied to clipboard!');
+              }
+            }}
+          >
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center gap-2">
+                <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                    item.contentType === 'Video' ? 'bg-rose-50 text-rose-600' :
+                    item.contentType === 'Carousel' ? 'bg-violet-50 text-violet-600' :
+                    item.contentType === 'Blog' ? 'bg-emerald-50 text-emerald-600' :
+                    item.contentType === 'Prompt' ? 'bg-amber-50 text-amber-600 border border-amber-200' :
+                    item.contentType === 'Post' ? 'bg-sky-50 text-sky-600' : 'bg-slate-50 text-slate-600'
+                }`}>
+                    {item.contentType === 'Prompt' ? `${item.type.toUpperCase()}` : item.contentType}
                 </div>
               </div>
-            ))}
+              <div className="text-slate-300 group-hover:text-accent transition-colors">
+                {item.type === 'script' ? <Play size={18} /> : item.type === 'blog' ? <Sparkles size={18} /> : <Wand2 size={18} />}
+              </div>
+            </div>
+            <h4 className="font-bold text-slate-800 dark:text-slate-100 line-clamp-2 mb-3 leading-tight flex-1">{item.title}</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 leading-relaxed mb-4">
+              {item.type === 'script' ? item.script?.hook : item.type === 'blog' ? item.excerpt : item.prompt}
+            </p>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-green-600 bg-green-50 w-fit px-3 py-1.5 rounded-lg">
+              <CheckCircle2 size={12} /> {item.type === 'script' ? 'AI Script Ready' : item.type === 'blog' ? 'Published' : 'Prompt Saved'}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

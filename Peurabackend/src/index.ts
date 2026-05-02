@@ -31,11 +31,19 @@ import ideaRoutes from './routes/idea';
 import scrapeRoutes from './routes/scrape';
 import notifyRoutes from './routes/notify';
 import aiRoutes from './routes/ai';
+import blogRoutes from './routes/blog';
+import actionPlanRoutes from './routes/actionPlan';
+import faqRoutes from './routes/faq';
+import visualPromptRoutes from './routes/visualPrompt';
 
 app.use('/api/idea', ideaRoutes);
 app.use('/api/scrape', scrapeRoutes);
 app.use('/api/notify', notifyRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/blog', blogRoutes);
+app.use('/api/action-plan', actionPlanRoutes);
+app.use('/api/faq', faqRoutes);
+app.use('/api/visual-prompt', visualPromptRoutes);
 
 
 // Basic health check

@@ -4,6 +4,7 @@ import React, { useState, useEffect, use, useRef } from 'react';
 import { ArrowLeft, Send, Plus, Sparkles, CheckCircle2, Smartphone, X, Loader2, Save, MessageCircle, Calendar } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/ThemeProvider';
+import Sidebar from '@/components/Sidebar';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -149,6 +150,8 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
     window.open(url, '_blank');
   };
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   if (!idea) return (
     <div className="flex items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950 text-xl font-bold text-accent">
       Loading Studio...
@@ -156,9 +159,12 @@ export default function EditScriptPage({ params }: { params: Promise<{ id: strin
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans flex flex-col h-screen overflow-hidden transition-colors duration-300">
-      {/* Header */}
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-6 lg:px-10 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0 gap-4">
+    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-50 font-sans relative overflow-x-hidden transition-colors duration-300">
+      <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
+      
+      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* Header */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center px-4 md:px-6 lg:px-10 py-4 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shrink-0 gap-4 mt-16 lg:mt-0">
         <div className="flex items-center gap-4 md:gap-6 w-full md:w-auto">
           <button onClick={() => router.back()} className="flex items-center gap-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-bold transition-colors">
             <ArrowLeft size={20} /> Back

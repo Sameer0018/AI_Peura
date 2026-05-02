@@ -66,6 +66,27 @@ FIXED: Professional high-resolution 4K quality, sharp focus on frames, editorial
     </div>
   );
 
+  const handleSave = async () => {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://peurabackend.onrender.com';
+    try {
+      const res = await fetch(`${API_URL}/api/visual-prompt/save`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Image Prompt: ${formData.modelDesc} at ${formData.environment}`,
+          type: 'Image',
+          prompt: generatePrompt(),
+          settings: formData
+        })
+      });
+      if (res.ok) {
+        alert('Prompt saved to Content Library!');
+      }
+    } catch (e) {
+      console.error("Save failed:", e);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-left-4 duration-500 pb-10">
       <div className="bg-white dark:bg-slate-900 rounded-[32px] p-8 border border-slate-200 dark:border-slate-800 shadow-sm space-y-8">
@@ -118,7 +139,14 @@ FIXED: Professional high-resolution 4K quality, sharp focus on frames, editorial
           className="flex-1 bg-slate-900 text-white py-6 rounded-3xl font-black text-lg shadow-2xl shadow-slate-900/30 hover:-translate-y-1 hover:shadow-slate-900/40 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-wider"
         >
           <Wand2 size={24} />
-          Copy Image Prompt
+          Copy
+        </button>
+        <button 
+          onClick={handleSave}
+          className="flex-1 bg-accent text-white py-6 rounded-3xl font-black text-lg shadow-2xl shadow-accent/20 hover:-translate-y-1 hover:shadow-accent/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-wider"
+        >
+          <Sparkles size={24} />
+          Save to Library
         </button>
         <a 
           href={`https://wa.me/918770864756?text=${encodeURIComponent(generatePrompt())}`}
@@ -126,7 +154,7 @@ FIXED: Professional high-resolution 4K quality, sharp focus on frames, editorial
           className="flex-1 bg-green-600 text-white py-6 rounded-3xl font-black text-lg shadow-2xl shadow-green-900/20 hover:-translate-y-1 hover:shadow-green-900/30 active:scale-[0.98] transition-all flex items-center justify-center gap-3 uppercase tracking-wider"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-circle"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 12h.01"/><path d="M12 12h.01"/><path d="M16 12h.01"/></svg>
-          Send to WhatsApp
+          WhatsApp
         </a>
       </div>
     </div>
